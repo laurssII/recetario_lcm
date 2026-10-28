@@ -1,0 +1,2187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Recetario — Gestión de receta electrónica</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --border: rgba(120,120,120,.28);
+    --surface: rgba(120,120,120,.07);
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; max-width: 960px; margin: 0 auto 3rem; padding: 0 1.25rem; line-height: 1.45; }
+  h1 { font-size: 1.4rem; }
+  h2 { font-size: 1.05rem; margin-top: 2.2rem; padding-bottom: .4rem; border-bottom: 1px solid var(--border); letter-spacing: .01em; }
+  h2 .action { float: right; font-size: .8rem; }
+
+  .app-header {
+    display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1rem;
+    padding: 1.1rem 0; margin-bottom: 1.75rem; border-bottom: 1px solid var(--border);
+  }
+  .brand { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+  .brand-badge {
+    flex: 0 0 auto; width: 2.3rem; height: 2.3rem; border-radius: 9px; color: #fff;
+    background: linear-gradient(135deg, var(--primary), #1e3a8a);
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .95rem;
+  }
+  .brand-text { min-width: 0; }
+  .brand-name-row { display: flex; align-items: baseline; gap: .5rem; }
+  .brand-name { font-weight: 700; font-size: 1.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand-tagline { font-size: .78rem; opacity: .62; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .demo-badge { font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--primary); background: rgba(37,99,235,.12); padding: .12rem .45rem; border-radius: 999px; flex: 0 0 auto; }
+  .header-controls { display: flex; align-items: center; gap: .7rem; justify-self: end; flex-wrap: wrap; }
+  .user-chip { display: flex; align-items: center; gap: .5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: .25rem .3rem .25rem .85rem; font-size: .83rem; white-space: nowrap; }
+  .role-badge { background: rgba(37,99,235,.14); color: var(--primary); padding: .15rem .5rem; border-radius: 999px; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  .user-chip button { padding: .3rem .7rem; font-size: .78rem; border-radius: 999px; }
+  @media (max-width: 640px) {
+    .app-header { grid-template-columns: 1fr; }
+    .header-controls { justify-self: start; }
+  }
+
+  .config { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: .8rem; opacity: .8; }
+  .config label { display: flex; flex-direction: column; gap: .2rem; }
+  .lang-switch { display: flex; gap: .2rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: .2rem; }
+  .lang-switch button { padding: .25rem .65rem; font-size: .75rem; border-radius: 999px; border: none; background: none; color: inherit; opacity: .55; }
+  .lang-switch button.active { background: var(--primary); color: white; opacity: 1; }
+
+  input, select, button { font: inherit; padding: .45rem .65rem; border-radius: 7px; border: 1px solid var(--border); }
+  button { cursor: pointer; background: var(--primary); color: white; border: none; font-weight: 500; }
+  button:hover { background: var(--primary-dark); }
+  button.secondary { background: #64748b; }
+  button.danger { background: #dc2626; }
+  button.link { background: none; color: var(--primary); padding: 0; text-decoration: underline; font-weight: 400; }
+  button:disabled { opacity: .5; cursor: default; }
+
+  .tabs { display: flex; gap: .25rem; margin-bottom: 1.4rem; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .3rem; }
+  .tabs button { background: none; color: inherit; opacity: .6; border-radius: 7px; font-size: .88rem; }
+  .tabs button:hover { background: rgba(120,120,120,.12); opacity: 1; }
+  .tabs button:not(.inactive) { background: var(--primary); color: #fff; opacity: 1; }
+
+  table { width: 100%; border-collapse: collapse; margin: .6rem 0; font-size: .9rem; }
+  th, td { text-align: left; padding: .5rem .4rem; border-bottom: 1px solid var(--border); }
+  th { font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; opacity: .6; font-weight: 600; }
+  tbody tr:hover { background: rgba(120,120,120,.06); }
+
+  .slots { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
+  .slots button { background: #16a34a; }
+  .slots button.selected-slot { background: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,.35); }
+  .confirm-panel { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; background: rgba(37,99,235,.07); border: 1px solid rgba(37,99,235,.35); border-radius: 10px; padding: .75rem 1rem; margin: .6rem 0; font-size: .92rem; }
+  .confirm-actions { display: flex; gap: .5rem; }
+  .form-row { display: flex; gap: .5rem; flex-wrap: wrap; align-items: flex-end; margin: .5rem 0; }
+  .form-row label { display: flex; flex-direction: column; font-size: .8rem; gap: .25rem; opacity: .85; }
+  .form-row label.wide { flex: 1; }
+  .form-row input.wide { width: 100%; }
+  .msg { padding: .6rem .8rem; border-radius: 8px; margin: .6rem 0; font-size: .9rem; }
+  .msg.ok { background: #16a34a1f; border: 1px solid #16a34a55; }
+  .msg.error { background: #dc26261f; border: 1px solid #dc262655; }
+  tr.medication-result { cursor: pointer; }
+  tr.medication-result:hover { background: rgba(120,120,120,.12); }
+  tr.medication-result.selected { background: rgba(37,99,235,.16); }
+  tr.fillable td:first-child { border-left: 3px solid #16a34a; }
+  tr.not-fillable td:first-child { border-left: 3px solid #dc2626; }
+
+  .directory { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: .8rem; }
+  .person-card { text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .9rem; color: inherit; transition: border-color .15s, transform .1s; }
+  .person-card:hover { border-color: var(--primary); background: rgba(37,99,235,.07); }
+  .person-card .name { font-weight: 600; }
+  .person-card .detail { font-size: .8rem; opacity: .7; margin-top: .25rem; }
+
+  .profile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.1rem; margin-bottom: 1rem; }
+  .profile dl { display: grid; grid-template-columns: auto 1fr; gap: .35rem 1.2rem; margin: .6rem 0 0; font-size: .9rem; }
+  .profile dt { opacity: .6; }
+  .profile dd { margin: 0; }
+
+  .create-form { background: rgba(37,99,235,.05); border: 1px solid rgba(37,99,235,.3); border-radius: var(--radius); padding: .9rem; margin: .9rem 0; }
+  .create-form .form-row { margin: .4rem 0; }
+  .filter-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .7rem; margin-bottom: .7rem; }
+
+  .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .login-card { max-width: 380px; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 2rem; }
+  .login-brand { display: flex; flex-direction: column; align-items: center; gap: .6rem; margin-bottom: 1.6rem; text-align: center; }
+  .login-brand .brand-badge { width: 3rem; height: 3rem; font-size: 1.2rem; }
+  .login-brand h1 { margin: 0; font-size: 1.3rem; }
+  .login-brand p { margin: 0; font-size: .85rem; opacity: .65; }
+  .login-card form { display: flex; flex-direction: column; gap: .9rem; }
+  .login-card label { display: flex; flex-direction: column; gap: .3rem; font-size: .82rem; opacity: .85; }
+  .login-card input { width: 100%; }
+  .login-card button[type="submit"] { padding: .6rem; font-size: .95rem; margin-top: .2rem; }
+  .demo-note { margin-top: 1.5rem; font-size: .78rem; opacity: .75; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: .7rem .8rem; line-height: 1.6; }
+  .demo-note strong { opacity: .9; }
+  .login-config { text-align: center; margin-bottom: 1rem; }
+
+  input[aria-invalid="true"], select[aria-invalid="true"] { border-color: #dc2626; box-shadow: 0 0 0 1px #dc262655; }
+  .date-wrap { position: relative; display: inline-flex; gap: .3rem; align-items: stretch; }
+  .date-wrap input[type="text"] { width: 8.2rem; }
+  .cal-btn { padding: .3rem .5rem; background: none; border: 1px solid var(--border); color: inherit; }
+  .cal-btn:hover { background: rgba(120,120,120,.15); }
+  .cal-hidden { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; padding: 0; border: 0; }
+  .field-error { color: #dc2626; font-size: .72rem; line-height: 1.25; max-width: 20rem; }
+  .info-note { font-size: .82rem; background: rgba(37,99,235,.08); border: 1px solid rgba(37,99,235,.3); border-radius: 8px; padding: .5rem .75rem; margin: .6rem 0; line-height: 1.45; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React, via CDN (this file is meant to be opened locally, not published as a page) -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel" data-type="module">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// The product name is the same in every language; only the subtitle is translated.
+const APP_NAME = 'Recetario';
+const ROLE_LABELS = {
+  es: { ADMINISTRATOR: 'Administrador', DOCTOR: 'Médico', PATIENT: 'Paciente', PHARMACY: 'Farmacia' },
+  en: { ADMINISTRATOR: 'Administrator', DOCTOR: 'Doctor', PATIENT: 'Patient', PHARMACY: 'Pharmacy' },
+};
+
+// The form checks below mirror the server-side rules (doc/validaciones.md);
+// error messages coming back from the API are generated in Spanish by the server.
+
+const STRINGS = {
+  es: {
+    subtitle: 'Sistema de gestión de receta electrónica',
+    connectionConfig: 'Configuración de conexión', apiUrl: 'URL de la API', reconnect: 'Reconectar',
+    connectError: (apiBase, err) => `No se pudo conectar con la API en ${apiBase}: ${err}`,
+
+    login: 'Iniciar sesión', loginUsername: 'Usuario', loginPassword: 'Contraseña', loginButton: 'Entrar',
+    demoModeLabel: 'Entorno de demostración.',
+    demoCredentials: 'Credenciales de prueba: admin/admin (administrador), lfernandez/LIC-4501 (médico), xrodriguez/20000001Y (paciente), compostela/PLIC-778899 (farmacia).',
+    logout: 'Desconectar', loggedInAs: (name) => `${name}`,
+    datePlaceholder: 'dd/mm/aaaa', openCalendar: 'Abrir calendario',
+    sessionExpired: 'Tu sesión ha caducado o no es válida. Vuelve a iniciar sesión.',
+
+    tabAdministrators: 'Administradores', tabCenters: 'Centros', tabDoctors: 'Médicos',
+    tabPatients: 'Pacientes', tabPharmacies: 'Farmacias', tabAppointments: 'Citas', tabMedications: 'Medicamentos',
+
+    administrators: 'Administradores', newAdministrator: '+ Nuevo administrador', saveAdministrator: 'Guardar administrador',
+    initialPassword: 'Contraseña inicial',
+    administratorPasswordNote: 'Para los administradores la contraseña inicial la eliges tú aquí (entre 4 y 64 caracteres).',
+    registeredCol: 'Registrado', lastAccessCol: 'Último acceso',
+
+    patients: 'Pacientes', newPatient: '+ Nuevo paciente', cancel: 'Cancelar',
+    doctorPrefix: 'Médico: ',
+    name: 'Nombre', lastName: 'Apellidos', nationalId: 'DNI', healthCardNumber: 'Tarjeta sanitaria',
+    street: 'Domicilio', city: 'Localidad', postalCode: 'Código postal', province: 'Provincia',
+    phone: 'Teléfono', email: 'Email', birthDate: 'Fecha de nacimiento',
+    healthCenter: 'Centro de salud', assignedDoctor: 'Médico asignado', username: 'Usuario (login)',
+    savePatient: 'Guardar paciente', socialSecurityNumber: 'Nº Seguridad Social',
+    patientPasswordNote: (dni) => `La contraseña inicial del paciente será su DNI${dni ? ` (${dni})` : ''}. Podrá cambiarla desde «Mi perfil». Si dejas el usuario vacío, también se usará el DNI como usuario.`,
+
+    doctors: 'Médicos', newDoctor: '+ Nuevo médico', doctorLastName: 'Apellido',
+    licenseNumber: 'Nº colegiado', saveDoctor: 'Guardar médico',
+    initialPasswordNote: (license) => `La contraseña inicial del médico será su nº de colegiado${license ? ` (${license})` : ''}, no su DNI. Podrá cambiarla desde «Mi perfil». Si dejas el usuario vacío, se usará el nº de colegiado como usuario.`,
+
+    centers: 'Centros de salud', newCenter: '+ Nuevo centro', saveCenter: 'Guardar centro',
+    viewDetails: 'Ver detalles',
+    backToCenters: 'Volver al listado de centros',
+
+    medications: 'Medicamentos', newMedication: '+ Nuevo medicamento', saveMedication: 'Guardar medicamento',
+    brandName: 'Nombre comercial', activeIngredient: 'Principio activo', manufacturer: 'Fabricante',
+    category: 'Familia', unitsPerPackage: 'Dosis/envase',
+
+    pharmacies: 'Farmacias', newPharmacy: '+ Nueva farmacia', savePharmacy: 'Guardar farmacia',
+    pharmacyPasswordNote: (license) => `La contraseña inicial de la farmacia será el nº de colegiado del farmacéutico${license ? ` (${license})` : ''}. Podrá cambiarla desde «Mi perfil». Si dejas el usuario vacío, se usará el DNI/NIF.`,
+    establishmentName: 'Nombre del establecimiento', pharmacistFirstName: 'Farmacéutico (nombre)',
+    pharmacistLastName: 'Farmacéutico (apellidos)', taxId: 'DNI/NIF', pharmacist: 'Farmacéutico',
+    backToPharmacies: 'Volver al listado de farmacias',
+
+    deactivate: 'Dar de baja',
+    confirmDeactivate: (name) => `¿Dar de baja a "${name}"? Dejará de aparecer en los listados.`,
+
+    filters: 'Filtros', anyCenter: 'Cualquier centro', anyDoctor: 'Cualquier médico', anyPatient: 'Cualquier paciente',
+    filterByName: 'Nombre', filterByCity: 'Localidad', applyFilters: 'Filtrar', clearFilters: 'Limpiar',
+
+    backToPatients: 'Volver al listado de pacientes',
+    myAppointments: 'Mis citas', doctorCol: 'Médico', patientCol: 'Paciente', dateTimeCol: 'Fecha y hora',
+    statusCol: 'Estado', cancelAppointment: 'Anular', noAppointments: 'Sin citas.',
+    bookAppointment: 'Pedir cita', day: 'Día', viewAvailableSlots: 'Ver huecos libres',
+    noSlotsAvailable: 'No hay huecos libres ese día.',
+    confirmBooking: (time, date) => `¿Confirmas la cita del ${date} a las ${time}?`, confirmBookingBtn: 'Confirmar cita',
+    appointmentConfirmed: (time) => `Cita confirmada para las ${time}.`,
+    myPendingRefills: 'Mis recetas pendientes', noPendingRefills: 'No hay recetas pendientes.',
+    medicationCol: 'Medicamento', validityCol: 'Válida', boxesCol: 'Cajas',
+
+    backToDoctors: 'Volver al listado de médicos',
+    mySchedule: 'Mi agenda', viewSchedule: 'Ver agenda', noAppointmentsThatDay: 'Sin citas ese día.',
+    noShow: 'Ausente', complete: 'Completada', attend: 'Atender',
+    appointmentAttention: 'Atención al paciente', backToSchedule: '← Volver a la agenda',
+    activePrescriptions: 'Prescripciones en vigor', noActivePrescriptions: 'No hay prescripciones en vigor.',
+    cancelPrescription: 'Anular', doseCol: 'Dosis', periodCol: 'Periodo',
+    completeAppointment: 'Marcar cita como completada',
+    createPrescription: 'Crear prescripción', newPrescriptionBtn: '+ Nueva prescripción',
+    patient: 'Paciente', noPatientsAssigned: 'Este médico no tiene pacientes asignados',
+    searchMedication: 'Buscar medicamento (nombre comercial)', search: 'Buscar',
+    selectedMedication: 'Medicamento seleccionado', dailyDose: 'Dosis diaria (unidades/día)',
+    endDate: 'Fecha de fin', instructions: 'Indicaciones', instructionsPlaceholder: '1 comprimido cada 12h',
+    createPrescriptionAndPlan: 'Crear prescripción y generar plan de recetas',
+    selectMedicationFirst: 'Selecciona antes un medicamento de la búsqueda.',
+    planCreated: 'Prescripción y plan de recetas creados correctamente.',
+    generatedPlan: (n) => `Plan de recetas generado (${n} recetas):`,
+    validFromCol: 'Válida desde', validUntilCol: 'Válida hasta',
+
+    myProfile: 'Mi perfil', saveProfile: 'Guardar cambios', profileUpdated: 'Datos actualizados correctamente.',
+    changePassword: 'Cambiar contraseña', currentPassword: 'Contraseña actual', newPassword: 'Nueva contraseña',
+    passwordChanged: 'Contraseña actualizada correctamente.',
+
+    appointmentsAdmin: 'Gestión de citas', viewAppointments: 'Ver citas',
+
+    pharmacyLookup: 'Gestión de receta', lookupByCard: 'Nº de tarjeta sanitaria del paciente',
+    fillableNow: 'Servible ahora', notFillableYet: 'Fuera de plazo', markAsFilled: 'Anotar receta servida',
+    refillFilled: 'Receta anotada como servida.', noRefillsFound: 'No hay recetas en vigor para esa tarjeta sanitaria.',
+    searchByCard: 'Buscar',
+
+    fixErrors: 'Revisa los campos marcados en rojo.',
+    errRequired: (label) => `${label}: campo obligatorio.`,
+    selectProvince: '— Selecciona provincia —',
+    errName: 'Solo letras, espacios, guiones y apóstrofos (2-60 caracteres).',
+    errNationalId: 'DNI/NIE no válido: 8 dígitos y letra correcta (o X/Y/Z + 7 dígitos + letra).',
+    errTaxId: 'DNI/NIF no válido: DNI o NIE con letra correcta, o CIF.',
+    errHealthCard: 'Debe tener 4 letras y 10 dígitos (ej.: ABCD1234567890).',
+    errSocialSecurity: 'Debe tener 12 dígitos.',
+    errLicense: 'De 4 a 15 caracteres: letras, dígitos o guiones (ej.: LIC-4501).',
+    errPhone: 'Debe tener 9 dígitos y empezar por 6, 7, 8 o 9.',
+    errEmail: 'Email no válido (ej.: nombre@dominio.es).',
+    errUsername: 'De 3 a 30 caracteres: letras, dígitos, punto, guion o guion bajo.',
+    errStreet: 'Entre 3 y 120 caracteres.',
+    errCity: 'Solo letras, espacios, guiones, apóstrofos y barras.',
+    errPostalCode: 'Debe tener 5 dígitos y empezar por un código de provincia válido (01-52).',
+    errPostalProvince: (cp, province, code) => `El código postal ${cp} no corresponde a ${province} (debería empezar por ${code}).`,
+    errProvince: 'Selecciona una provincia de la lista.',
+    errBirthDate: 'Escribe una fecha válida (dd/mm/aaaa) entre el 01/01/1900 y hoy.',
+    errPassword: 'Entre 4 y 64 caracteres.',
+    errMaxLength: (n) => `Máximo ${n} caracteres.`,
+    errUnits: 'Debe ser un número entero entre 1 y 1000.',
+    errDose: 'Debe ser un número mayor que 0 y como máximo 100.',
+    errEndDate: 'Escribe una fecha válida (dd/mm/aaaa) posterior a hoy.',
+  },
+  en: {
+    subtitle: 'Electronic prescription management system',
+    connectionConfig: 'Connection settings', apiUrl: 'API URL', reconnect: 'Reconnect',
+    connectError: (apiBase, err) => `Could not connect to the API at ${apiBase}: ${err}`,
+
+    login: 'Log in', loginUsername: 'Username', loginPassword: 'Password', loginButton: 'Log in',
+    demoModeLabel: 'Demo environment.',
+    demoCredentials: 'Demo credentials: admin/admin (administrator), lfernandez/LIC-4501 (doctor), xrodriguez/20000001Y (patient), compostela/PLIC-778899 (pharmacy).',
+    logout: 'Log out', loggedInAs: (name) => `${name}`,
+    datePlaceholder: 'dd/mm/yyyy', openCalendar: 'Open calendar',
+    sessionExpired: 'Your session has expired or is no longer valid. Please log in again.',
+
+    tabAdministrators: 'Administrators', tabCenters: 'Health Centers', tabDoctors: 'Doctors',
+    tabPatients: 'Patients', tabPharmacies: 'Pharmacies', tabAppointments: 'Appointments', tabMedications: 'Medications',
+
+    administrators: 'Administrators', newAdministrator: '+ New administrator', saveAdministrator: 'Save administrator',
+    initialPassword: 'Initial password',
+    administratorPasswordNote: 'For administrators you choose the initial password here (4 to 64 characters).',
+    registeredCol: 'Registered', lastAccessCol: 'Last access',
+
+    patients: 'Patients', newPatient: '+ New patient', cancel: 'Cancel',
+    doctorPrefix: 'Doctor: ',
+    name: 'Name', lastName: 'Last name', nationalId: 'National ID', healthCardNumber: 'Health card number',
+    street: 'Street address', city: 'City', postalCode: 'Postal code', province: 'Province',
+    phone: 'Phone', email: 'Email', birthDate: 'Date of birth',
+    healthCenter: 'Health center', assignedDoctor: 'Assigned doctor', username: 'Username',
+    savePatient: 'Save patient', socialSecurityNumber: 'Social Security no.',
+    patientPasswordNote: (dni) => `The patient's initial password will be their national ID (DNI)${dni ? ` (${dni})` : ''}. They can change it from "My profile". If you leave the username empty, the national ID is used as username too.`,
+
+    doctors: 'Doctors', newDoctor: '+ New doctor', doctorLastName: 'Last name',
+    licenseNumber: 'License number', saveDoctor: 'Save doctor',
+    initialPasswordNote: (license) => `The doctor's initial password will be their license number${license ? ` (${license})` : ''}, not their national ID. They can change it from "My profile". If you leave the username empty, the license number is used as username.`,
+
+    centers: 'Health centers', newCenter: '+ New health center', saveCenter: 'Save health center',
+    viewDetails: 'View details',
+    backToCenters: 'Back to health centers list',
+
+    medications: 'Medications', newMedication: '+ New medication', saveMedication: 'Save medication',
+    brandName: 'Brand name', activeIngredient: 'Active ingredient', manufacturer: 'Manufacturer',
+    category: 'Category', unitsPerPackage: 'Units/package',
+
+    pharmacies: 'Pharmacies', newPharmacy: '+ New pharmacy', savePharmacy: 'Save pharmacy',
+    pharmacyPasswordNote: (license) => `The pharmacy's initial password will be the pharmacist's license number${license ? ` (${license})` : ''}. They can change it from "My profile". If you leave the username empty, the tax ID is used as username.`,
+    establishmentName: 'Establishment name', pharmacistFirstName: 'Pharmacist (first name)',
+    pharmacistLastName: 'Pharmacist (last name)', taxId: 'Tax ID', pharmacist: 'Pharmacist',
+    backToPharmacies: 'Back to pharmacies list',
+
+    deactivate: 'Deactivate',
+    confirmDeactivate: (name) => `Deactivate "${name}"? They will no longer appear in the lists.`,
+
+    filters: 'Filters', anyCenter: 'Any health center', anyDoctor: 'Any doctor', anyPatient: 'Any patient',
+    filterByName: 'Name', filterByCity: 'City', applyFilters: 'Filter', clearFilters: 'Clear',
+
+    backToPatients: 'Back to patients list',
+    myAppointments: 'My appointments', doctorCol: 'Doctor', patientCol: 'Patient', dateTimeCol: 'Date & time',
+    statusCol: 'Status', cancelAppointment: 'Cancel', noAppointments: 'No appointments.',
+    bookAppointment: 'Book an appointment', day: 'Day', viewAvailableSlots: 'View available slots',
+    noSlotsAvailable: 'No available slots that day.',
+    confirmBooking: (time, date) => `Confirm the appointment on ${date} at ${time}?`, confirmBookingBtn: 'Confirm appointment',
+    appointmentConfirmed: (time) => `Appointment confirmed for ${time}.`,
+    myPendingRefills: 'My pending refills', noPendingRefills: 'No pending refills.',
+    medicationCol: 'Medication', validityCol: 'Valid', boxesCol: 'Boxes',
+
+    backToDoctors: 'Back to doctors list',
+    mySchedule: 'My schedule', viewSchedule: 'View schedule', noAppointmentsThatDay: 'No appointments that day.',
+    noShow: 'No-show', complete: 'Complete', attend: 'Attend',
+    appointmentAttention: 'Patient visit', backToSchedule: '← Back to schedule',
+    activePrescriptions: 'Active prescriptions', noActivePrescriptions: 'No active prescriptions.',
+    cancelPrescription: 'Cancel', doseCol: 'Dose', periodCol: 'Period',
+    completeAppointment: 'Mark appointment as completed',
+    createPrescription: 'Create prescription', newPrescriptionBtn: '+ New prescription',
+    patient: 'Patient', noPatientsAssigned: 'This doctor has no assigned patients',
+    searchMedication: 'Search medication (brand name)', search: 'Search',
+    selectedMedication: 'Selected medication', dailyDose: 'Daily dose (units/day)',
+    endDate: 'End date', instructions: 'Instructions', instructionsPlaceholder: '1 tablet every 12h',
+    createPrescriptionAndPlan: 'Create prescription and generate refill plan',
+    selectMedicationFirst: 'Select a medication from the search results first.',
+    planCreated: 'Prescription and refill plan created successfully.',
+    generatedPlan: (n) => `Generated refill plan (${n} refills):`,
+    validFromCol: 'Valid from', validUntilCol: 'Valid until',
+
+    myProfile: 'My profile', saveProfile: 'Save changes', profileUpdated: 'Profile updated successfully.',
+    changePassword: 'Change password', currentPassword: 'Current password', newPassword: 'New password',
+    passwordChanged: 'Password updated successfully.',
+
+    appointmentsAdmin: 'Appointment management', viewAppointments: 'View appointments',
+
+    pharmacyLookup: 'Prescription lookup', lookupByCard: "Patient's health card number",
+    fillableNow: 'Fillable now', notFillableYet: 'Out of validity window', markAsFilled: 'Mark as filled',
+    refillFilled: 'Refill marked as filled.', noRefillsFound: 'No valid refills for that health card number.',
+    searchByCard: 'Search',
+
+    fixErrors: 'Please review the fields marked in red.',
+    errRequired: (label) => `${label}: required field.`,
+    selectProvince: '— Select province —',
+    errName: 'Letters, spaces, hyphens and apostrophes only (2-60 characters).',
+    errNationalId: 'Invalid DNI/NIE: 8 digits and the right letter (or X/Y/Z + 7 digits + letter).',
+    errTaxId: 'Invalid tax ID: a DNI or NIE with the right letter, or a CIF.',
+    errHealthCard: 'Must be 4 letters followed by 10 digits (e.g. ABCD1234567890).',
+    errSocialSecurity: 'Must have 12 digits.',
+    errLicense: '4 to 15 characters: letters, digits or hyphens (e.g. LIC-4501).',
+    errPhone: 'Must have 9 digits and start with 6, 7, 8 or 9.',
+    errEmail: 'Invalid email (e.g. name@domain.com).',
+    errUsername: '3 to 30 characters: letters, digits, dot, hyphen or underscore.',
+    errStreet: 'Between 3 and 120 characters.',
+    errCity: 'Letters, spaces, hyphens, apostrophes and slashes only.',
+    errPostalCode: 'Must have 5 digits and start with a valid province code (01-52).',
+    errPostalProvince: (cp, province, code) => `Postal code ${cp} does not belong to ${province} (it should start with ${code}).`,
+    errProvince: 'Select a province from the list.',
+    errBirthDate: 'Enter a valid date (dd/mm/yyyy) between 01/01/1900 and today.',
+    errPassword: 'Between 4 and 64 characters.',
+    errMaxLength: (n) => `At most ${n} characters.`,
+    errUnits: 'Must be a whole number between 1 and 1000.',
+    errDose: 'Must be a number greater than 0 and at most 100.',
+    errEndDate: 'Enter a valid date (dd/mm/yyyy) after today.',
+  },
+};
+
+function useI18n(lang) {
+  const dict = STRINGS[lang];
+  return (key, ...args) => {
+    const entry = dict[key];
+    return typeof entry === 'function' ? entry(...args) : entry;
+  };
+}
+
+function LanguageSwitcher({ lang, onChange }) {
+  return (
+    <div className="lang-switch">
+      <button className={lang === 'es' ? 'active' : 'inactive-lang'} onClick={() => onChange('es')}>ES</button>
+      <button className={lang === 'en' ? 'active' : 'inactive-lang'} onClick={() => onChange('en')}>EN</button>
+    </div>
+  );
+}
+
+
+function todayISO() { return localDateISO(); }
+function monthsFromNowISO(n) { const d = new Date(); d.setMonth(d.getMonth() + n); return dateToISO(d); }
+
+/**
+ * Returns the function used for every request to the API. Once logged in, the access
+ * token goes in the Authorization header; if the server answers 401 to an authenticated
+ * request (token expired or no longer valid), onUnauthorized() sends the user back to the login.
+ */
+function useApi(apiBase, token, onUnauthorized) {
+  return useCallback(async (method, path, body) => {
+    const headers = {};
+    if (body) headers['Content-Type'] = 'application/json';
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const resp = await fetch(apiBase.replace(/\/$/, '') + path, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (resp.status === 401 && token && onUnauthorized) onUnauthorized();
+    if (resp.status === 204) return null;
+    const text = await resp.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch (e) { data = null; }
+    if (!resp.ok) throw new Error((data && data.message) || `HTTP error ${resp.status}`);
+    return data;
+  }, [apiBase, token, onUnauthorized]);
+}
+
+function useNotice() {
+  const [notice, setNotice] = useState({ text: '', isError: false });
+  const notify = (text, isError = false) => {
+    setNotice({ text, isError });
+    setTimeout(() => setNotice({ text: '', isError: false }), 6000);
+  };
+  return [notice, notify];
+}
+
+function Notice({ text, isError }) {
+  if (!text) return null;
+  return <div className={`msg ${isError ? 'error' : 'ok'}`}>{text}</div>;
+}
+
+function BackButton({ onClick, children }) {
+  return <button className="link" onClick={onClick}>← {children}</button>;
+}
+
+function DeactivateButton({ name, t, onConfirm }) {
+  return (
+    <button className="danger" onClick={() => {
+      if (window.confirm(t('confirmDeactivate', name))) onConfirm();
+    }}>{t('deactivate')}</button>
+  );
+}
+
+// These checks mirror the server-side rules (package es.uvigo.dagss.recetas.validation)
+// and run before any request is sent; keep both in sync (doc/validaciones.md).
+
+/** Spanish provinces; index + 1 is the province code (= first two digits of the postal code). */
+const PROVINCES = [
+  'Álava', 'Albacete', 'Alicante', 'Almería', 'Ávila', 'Badajoz', 'Illes Balears', 'Barcelona', 'Burgos', 'Cáceres',
+  'Cádiz', 'Castellón', 'Ciudad Real', 'Córdoba', 'A Coruña', 'Cuenca', 'Girona', 'Granada', 'Guadalajara', 'Gipuzkoa',
+  'Huelva', 'Huesca', 'Jaén', 'León', 'Lleida', 'La Rioja', 'Lugo', 'Madrid', 'Málaga', 'Murcia',
+  'Navarra', 'Ourense', 'Asturias', 'Palencia', 'Las Palmas', 'Pontevedra', 'Salamanca', 'Santa Cruz de Tenerife', 'Cantabria', 'Segovia',
+  'Sevilla', 'Soria', 'Tarragona', 'Teruel', 'Toledo', 'Valencia', 'Valladolid', 'Bizkaia', 'Zamora', 'Zaragoza',
+  'Ceuta', 'Melilla',
+];
+const provinceCode = (name) => { const i = PROVINCES.indexOf(name); return i < 0 ? null : String(i + 1).padStart(2, '0'); };
+const provinceFromPostalCode = (cp) => { const n = Number(cp.slice(0, 2)); return n >= 1 && n <= 52 ? PROVINCES[n - 1] : ''; };
+
+/** A Date (local time) as YYYY-MM-DD. Not toISOString(): that one is UTC and near midnight gives another day. */
+function dateToISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function localDateISO() { return dateToISO(new Date()); }
+
+// Dates. The API always speaks ISO (YYYY-MM-DD); people see and type DD/MM/YYYY, whatever the browser's locale
+// is (that is why there is no <input type="date">: its format cannot be chosen, it follows the browser).
+/** YYYY-MM-DD (optionally followed by a time) -> DD/MM/YYYY; '' if it is not a date. */
+function isoToDisplay(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+}
+/** YYYY-MM-DDTHH:mm... -> DD/MM/YYYY HH:mm. */
+function isoToDisplayDateTime(iso) {
+  const date = isoToDisplay(iso);
+  return date ? `${date} ${String(iso).slice(11, 16)}` : '';
+}
+/** DD/MM/YYYY -> YYYY-MM-DD, or null if it is not a real calendar date (31/02/2025, 5/3/2025, 12/04/85...). */
+function displayToIso(text) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(text || '');
+  if (!m) return null;
+  const day = Number(m[1]), month = Number(m[2]), year = Number(m[3]);
+  const d = new Date(year, month - 1, day);
+  return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day ? `${m[3]}-${m[2]}-${m[1]}` : null;
+}
+/** While typing: keeps the digits (max. 8) and puts the slashes in, so 28102026 becomes 28/10/2026. */
+function maskDate(raw) {
+  const d = String(raw).replace(/\D/g, '').slice(0, 8);
+  if (d.length <= 2) return d;
+  return d.length <= 4 ? `${d.slice(0, 2)}/${d.slice(2)}` : `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`;
+}
+
+const DNI_LETTERS = 'TRWAGMYFPDXBNJZSQVHLCKE';
+function isValidDni(v) {
+  const m = /^(\d{8})([A-Z])$/.exec(v);
+  return !!m && DNI_LETTERS[Number(m[1]) % 23] === m[2];
+}
+function isValidNie(v) {
+  const m = /^([XYZ])(\d{7})([A-Z])$/.exec(v);
+  return !!m && DNI_LETTERS[Number('XYZ'.indexOf(m[1]) + m[2]) % 23] === m[3];
+}
+
+const maxLen = (n) => ({ msg: 'errMaxLength', arg: n, test: v => v.length <= n });
+
+/** Rules by kind. `upper`: the value is upper-cased before testing (the server does the same). */
+const RULES = {
+  any: { msg: '', test: () => true },
+  personName: { msg: 'errName', test: v => /^\p{L}[\p{L} .'’-]{1,59}$/u.test(v) },
+  nationalId: { msg: 'errNationalId', upper: true, test: v => isValidDni(v) || isValidNie(v) },
+  taxId: { msg: 'errTaxId', upper: true, test: v => isValidDni(v) || isValidNie(v) || /^[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]$/.test(v) },
+  healthCard: { msg: 'errHealthCard', upper: true, test: v => /^[A-Z]{4}\d{10}$/.test(v) },
+  socialSecurity: { msg: 'errSocialSecurity', test: v => /^\d{12}$/.test(v) },
+  license: { msg: 'errLicense', upper: true, test: v => /^[A-Z0-9][A-Z0-9-]{3,14}$/.test(v) },
+  phone: { msg: 'errPhone', test: v => /^[6-9]\d{8}$/.test(v) },
+  email: { msg: 'errEmail', test: v => v.length <= 100 && /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/.test(v) },
+  username: { msg: 'errUsername', test: v => /^[A-Za-z0-9._-]{3,30}$/.test(v) },
+  street: { msg: 'errStreet', test: v => v.length >= 3 && v.length <= 120 },
+  city: { msg: 'errCity', test: v => /^\p{L}[\p{L} .'’/-]{1,59}$/u.test(v) },
+  postalCode: { msg: 'errPostalCode', test: v => /^(0[1-9]|[1-4]\d|5[0-2])\d{3}$/.test(v) },
+  province: { msg: 'errProvince', test: v => PROVINCES.includes(v) },
+  birthDate: { msg: 'errBirthDate', test: v => { const iso = displayToIso(v); return !!iso && iso >= '1900-01-01' && iso <= localDateISO(); } },
+  password: { msg: 'errPassword', test: v => v.length >= 4 && v.length <= 64 },
+  units: { msg: 'errUnits', test: v => /^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= 1000 },
+  dose: { msg: 'errDose', test: v => Number(v) > 0 && Number(v) <= 100 },
+  futureDate: { msg: 'errEndDate', test: v => { const iso = displayToIso(v); return !!iso && iso > localDateISO(); } },
+  text80: maxLen(80), text100: maxLen(100), text120: maxLen(120), text255: maxLen(255),
+};
+
+/** One form field to check: `optional` fields are only checked when they are not empty. */
+const f = (field, rule, label, optional = false) => ({ field, rule, label, optional });
+
+/**
+ * Checks `values` against `spec` and returns {field: message} (empty when all is fine).
+ * Nothing may be left blank unless the field is `optional`.
+ */
+function validateForm(values, spec, t) {
+  const errors = {};
+  for (const { field, rule, label, optional } of spec) {
+    let value = String(values[field] ?? '').trim();
+    if (!value) {
+      if (!optional) errors[field] = t('errRequired', t(label));
+      continue;
+    }
+    const r = RULES[rule];
+    if (r.upper) value = value.toUpperCase();
+    if (!r.test(value)) errors[field] = r.arg !== undefined ? t(r.msg, r.arg) : t(r.msg);
+  }
+  // The postal code must belong to the selected province (36xxx -> Pontevedra).
+  if (spec.some(x => x.field === 'postalCode') && !errors.postalCode && !errors.province) {
+    const cp = String(values.postalCode ?? '').trim();
+    const code = provinceCode(String(values.province ?? '').trim());
+    if (cp && code && !cp.startsWith(code)) errors.postalCode = t('errPostalProvince', cp, values.province, code);
+  }
+  return errors;
+}
+
+const hasErrors = (errors) => Object.keys(errors).length > 0;
+
+const NAME_FIELDS = [f('name', 'personName', 'name'), f('lastName', 'personName', 'lastName')];
+const ADDRESS_FIELDS = [
+  f('street', 'street', 'street'), f('city', 'city', 'city'),
+  f('postalCode', 'postalCode', 'postalCode'), f('province', 'province', 'province'),
+];
+const CONTACT_FIELDS = [f('phone', 'phone', 'phone'), f('email', 'email', 'email')];
+
+const PATIENT_SPEC = [
+  ...NAME_FIELDS, f('nationalId', 'nationalId', 'nationalId'),
+  f('healthCardNumber', 'healthCard', 'healthCardNumber'), f('socialSecurityNumber', 'socialSecurity', 'socialSecurityNumber'),
+  ...ADDRESS_FIELDS, ...CONTACT_FIELDS, f('birthDate', 'birthDate', 'birthDate'),
+  f('healthCenterId', 'any', 'healthCenter'), f('doctorId', 'any', 'assignedDoctor'),
+  f('username', 'username', 'username', true),
+];
+const DOCTOR_SPEC = [
+  f('name', 'personName', 'name'), f('lastName', 'personName', 'doctorLastName'), f('nationalId', 'nationalId', 'nationalId'),
+  f('licenseNumber', 'license', 'licenseNumber'), ...CONTACT_FIELDS,
+  f('healthCenterId', 'any', 'healthCenter'), f('username', 'username', 'username', true),
+];
+const ADMIN_SPEC = [
+  f('name', 'personName', 'name'), f('email', 'email', 'email'),
+  f('username', 'username', 'username'), f('password', 'password', 'initialPassword'),
+];
+const CENTER_SPEC = [f('name', 'text100', 'name'), ...ADDRESS_FIELDS, ...CONTACT_FIELDS];
+const MEDICATION_SPEC = [
+  f('brandName', 'text120', 'brandName'), f('activeIngredient', 'text120', 'activeIngredient'),
+  f('manufacturer', 'text120', 'manufacturer'), f('category', 'text80', 'category'),
+  f('unitsPerPackage', 'units', 'unitsPerPackage'),
+];
+const PHARMACY_SPEC = [
+  f('name', 'text100', 'establishmentName'),
+  f('pharmacistFirstName', 'personName', 'pharmacistFirstName'), f('pharmacistLastName', 'personName', 'pharmacistLastName'),
+  f('taxId', 'taxId', 'taxId'), f('pharmacistLicenseNumber', 'license', 'licenseNumber'),
+  ...ADDRESS_FIELDS, ...CONTACT_FIELDS, f('username', 'username', 'username', true),
+];
+const DOCTOR_PROFILE_SPEC = [...NAME_FIELDS.slice(0, 1), f('lastName', 'personName', 'doctorLastName'), ...CONTACT_FIELDS];
+const PATIENT_PROFILE_SPEC = [...NAME_FIELDS, ...CONTACT_FIELDS, ...ADDRESS_FIELDS];
+const PHARMACY_PROFILE_SPEC = [
+  f('name', 'text100', 'establishmentName'),
+  f('pharmacistFirstName', 'personName', 'pharmacistFirstName'), f('pharmacistLastName', 'personName', 'pharmacistLastName'),
+  ...CONTACT_FIELDS, ...ADDRESS_FIELDS,
+];
+const PASSWORD_CHANGE_SPEC = [f('currentPassword', 'any', 'currentPassword'), f('newPassword', 'password', 'newPassword')];
+const PRESCRIPTION_SPEC = [f('dose', 'dose', 'dailyDose'), f('endDate', 'futureDate', 'endDate'), f('instructions', 'text255', 'instructions')];
+
+function Field({ label, name, values, onChange, type = 'text', wide, errors, maxDigits, ...rest }) {
+  const error = errors ? errors[name] : undefined;
+  const handleChange = (e) => {
+    const raw = e.target.value;
+    // `maxDigits`: digits-only field. Filtering here (instead of using maxLength) keeps a pasted "986 123 456" intact.
+    onChange({ ...values, [name]: maxDigits ? raw.replace(/\D/g, '').slice(0, maxDigits) : raw });
+  };
+  return (
+    <label className={wide ? 'wide' : ''}>
+      {label}
+      <input className={wide ? 'wide' : ''} type={type} value={values[name] ?? ''} onChange={handleChange}
+             aria-invalid={error ? 'true' : undefined} {...rest} />
+      {error && <span className="field-error" role="alert">{error}</span>}
+    </label>
+  );
+}
+
+/** Calendar button that opens the browser's calendar; the date picked comes back as ISO (the hidden native input is only a picker). */
+function CalendarButton({ iso, onPick, min, max, t }) {
+  const ref = useRef(null);
+  const open = () => {
+    const el = ref.current;
+    if (!el) return;
+    if (el.showPicker) { try { el.showPicker(); return; } catch (e) { /* falls back to focus */ } }
+    el.focus();
+  };
+  return (
+    <>
+      <button type="button" className="cal-btn" title={t('openCalendar')} aria-label={t('openCalendar')} onClick={open}><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false" style={{ display: 'block' }}><rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.4" /><path d="M2 6.5h12M5 1.5v3M11 1.5v3" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg></button>
+      <input ref={ref} type="date" className="cal-hidden" tabIndex={-1} aria-hidden="true" value={iso || ''} min={min} max={max}
+             onChange={e => { if (e.target.value) onPick(e.target.value); }} />
+    </>
+  );
+}
+
+/** Form date field: the text DD/MM/YYYY is what is kept in the form values (and validated); convert with displayToIso to send it. */
+function DateField({ label, name, values, onChange, errors, t, min, max }) {
+  const error = errors ? errors[name] : undefined;
+  return (
+    <label>{label}
+      <span className="date-wrap">
+        <input type="text" inputMode="numeric" autoComplete="off" maxLength={10} placeholder={t('datePlaceholder')}
+               value={values[name] ?? ''} aria-invalid={error ? 'true' : undefined}
+               onChange={e => onChange({ ...values, [name]: maskDate(e.target.value) })} />
+        <CalendarButton iso={displayToIso(values[name])} min={min} max={max} t={t}
+                        onPick={iso => onChange({ ...values, [name]: isoToDisplay(iso) })} />
+      </span>
+      {error && <span className="field-error" role="alert">{error}</span>}
+    </label>
+  );
+}
+
+/**
+ * Date filter (day of the agenda, day to book...): `value` is ISO and `onChange` only fires with a complete, real date.
+ * While the text is incomplete it is shown as invalid, and on leaving the field it goes back to the last valid date.
+ */
+function DateInput({ value, onChange, t, min, max }) {
+  const [text, setText] = useState(isoToDisplay(value));
+  useEffect(() => { if (displayToIso(text) !== value) setText(isoToDisplay(value)); }, [value]); // eslint-disable-line
+  const invalid = text !== '' && displayToIso(text) === null;
+  const handle = (e) => {
+    const next = maskDate(e.target.value);
+    setText(next);
+    const iso = displayToIso(next);
+    if (iso) onChange(iso);
+  };
+  return (
+    <span className="date-wrap">
+      <input type="text" inputMode="numeric" autoComplete="off" maxLength={10} placeholder={t('datePlaceholder')}
+             value={text} aria-invalid={invalid ? 'true' : undefined} onChange={handle}
+             onBlur={() => setText(isoToDisplay(value))} />
+      <CalendarButton iso={value} min={min} max={max} t={t} onPick={onChange} />
+    </span>
+  );
+}
+
+/** Phone: plain text input that only accepts digits (max. 9), instead of a number spinner. */
+function PhoneField(props) {
+  return <Field type="tel" inputMode="numeric" maxDigits={9} autoComplete="tel" placeholder="986123456" {...props} />;
+}
+
+/** Postal code: digits only (max. 5); suggests the matching province while the user types. */
+function PostalCodeField({ label, values, onChange, errors }) {
+  const handleChange = (next) => {
+    const cp = next.postalCode || '';
+    const guess = cp.length >= 2 ? provinceFromPostalCode(cp) : '';
+    // Only fill the province if it is empty or was itself filled automatically (never overwrite a manual choice).
+    if (guess && (!values.province || values._provinceAuto)) next = { ...next, province: guess, _provinceAuto: true };
+    onChange(next);
+  };
+  return <Field label={label} name="postalCode" values={values} onChange={handleChange} errors={errors}
+                inputMode="numeric" maxDigits={5} autoComplete="postal-code" placeholder="36201" />;
+}
+
+/** Province: a list with the 52 real provinces, so a made-up one cannot even be typed. */
+function ProvinceSelect({ label, values, onChange, errors, t }) {
+  const error = errors ? errors.province : undefined;
+  return (
+    <label>{label}
+      <select value={values.province ?? ''} aria-invalid={error ? 'true' : undefined}
+              onChange={e => onChange({ ...values, province: e.target.value, _provinceAuto: false })}>
+        <option value="">{t('selectProvince')}</option>
+        {PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+      </select>
+      {error && <span className="field-error" role="alert">{error}</span>}
+    </label>
+  );
+}
+
+/** Error line for inputs that are not a Field (e.g. a <select>). */
+function FieldError({ errors, name }) {
+  return errors && errors[name] ? <span className="field-error" role="alert">{errors[name]}</span> : null;
+}
+
+function InfoNote({ children }) {
+  return <p className="info-note">{children}</p>;
+}
+
+function PasswordChangeForm({ apiCall, endpoint, t }) {
+  const [v, setV] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [notice, notify] = useNotice();
+  const errors = submitted ? validateForm(v, PASSWORD_CHANGE_SPEC, t) : {};
+
+  const submit = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, PASSWORD_CHANGE_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('PATCH', endpoint, { currentPassword: v.currentPassword, newPassword: v.newPassword });
+      notify(t('passwordChanged'));
+      setV({});
+      setSubmitted(false);
+    } catch (e) { notify(e.message, true); }
+  };
+
+  return (
+    <div>
+      <div className="form-row">
+        <Field label={t('currentPassword')} name="currentPassword" values={v} onChange={setV} type="password" errors={errors} />
+        <Field label={t('newPassword')} name="newPassword" values={v} onChange={setV} type="password" errors={errors} />
+        <button onClick={submit}>{t('changePassword')}</button>
+      </div>
+      <Notice {...notice} />
+    </div>
+  );
+}
+
+
+function LoginScreen({ apiBase, setApiBase, apiCall, onLoggedIn, sessionExpired, lang, setLang, t }) {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [notice, notify] = useNotice();
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!username.trim()) { notify(t('errRequired', t('loginUsername')), true); return; }
+    if (!password) { notify(t('errRequired', t('loginPassword')), true); return; }
+    try {
+      const session = await apiCall('POST', '/auth/login', { username: username.trim(), password });
+      onLoggedIn(session);
+    } catch (err) { notify(err.message, true); }
+  };
+
+  return (
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-config">
+          <LanguageSwitcher lang={lang} onChange={setLang} />
+        </div>
+
+        <div className="login-brand">
+          <div className="brand-badge">Rx</div>
+          <h1>{APP_NAME}</h1>
+          <p>{t('subtitle')}</p>
+        </div>
+
+        <form onSubmit={submit}>
+          <label>{t('loginUsername')}
+            <input value={username} onChange={e => setUsername(e.target.value)} autoFocus />
+          </label>
+          <label>{t('loginPassword')}
+            <input type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          </label>
+          <button type="submit">{t('loginButton')}</button>
+        </form>
+        <Notice {...notice} />
+        {sessionExpired && !notice.text && <Notice text={t('sessionExpired')} isError />}
+
+        <div className="demo-note">
+          <strong>{t('demoModeLabel')}</strong> {t('demoCredentials')}
+          <details style={{ marginTop: '.5rem' }}>
+            <summary style={{ cursor: 'pointer' }}>{t('connectionConfig')}</summary>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: '.3rem', marginTop: '.5rem' }}>
+              {t('apiUrl')} <input value={apiBase} onChange={e => setApiBase(e.target.value)} />
+            </label>
+          </details>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function PatientDirectory({ patients, centers, doctors, filters, setFilters, onSelect, apiCall, onChanged, t }) {
+  const [creating, setCreating] = useState(false);
+  const filterDoctors = filters.healthCenterId ? doctors.filter(d => d.healthCenter && String(d.healthCenter.id) === String(filters.healthCenterId)) : doctors;
+
+  return (
+    <section>
+      <h2>{t('patients')} <span className="action"><button onClick={() => setCreating(c => !c)}>{creating ? t('cancel') : t('newPatient')}</button></span></h2>
+
+      <div className="filter-bar form-row">
+        <Field label={t('filterByName')} name="name" values={filters} onChange={setFilters} />
+        <label>{t('healthCenter')}
+          <select value={filters.healthCenterId || ''} onChange={e => setFilters({ ...filters, healthCenterId: e.target.value, doctorId: '' })}>
+            <option value="">{t('anyCenter')}</option>
+            {centers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </label>
+        <label>{t('assignedDoctor')}
+          <select value={filters.doctorId || ''} onChange={e => setFilters({ ...filters, doctorId: e.target.value })}>
+            <option value="">{t('anyDoctor')}</option>
+            {filterDoctors.map(d => <option key={d.id} value={d.id}>{d.name} {d.lastName}</option>)}
+          </select>
+        </label>
+        <button onClick={() => setFilters({})}>{t('clearFilters')}</button>
+      </div>
+
+      {creating && <NewPatientForm centers={centers} doctors={doctors} apiCall={apiCall} t={t}
+                  onCreated={() => { setCreating(false); onChanged(); }} />}
+      <div className="directory">
+        {patients.map(p => (
+          <button key={p.id} className="person-card" onClick={() => onSelect(p.id)}>
+            <div className="name">{p.name} {p.lastName}</div>
+            <div className="detail">{t('doctorPrefix')}{p.doctor ? p.doctor.name + ' ' + p.doctor.lastName : '—'}</div>
+            <div className="detail">{p.healthCenter ? p.healthCenter.name : ''}</div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function NewPatientForm({ centers, doctors, apiCall, onCreated, t }) {
+  const doctorsOf = (centerId) => doctors.filter(d => d.healthCenter && String(d.healthCenter.id) === String(centerId));
+  const firstCenterId = centers[0]?.id ?? '';
+  const [v, setV] = useState({ healthCenterId: firstCenterId, doctorId: doctorsOf(firstCenterId)[0]?.id ?? '' });
+  const [submitted, setSubmitted] = useState(false);
+  const [notice, notify] = useNotice();
+  const availableDoctors = v.healthCenterId ? doctorsOf(v.healthCenterId) : doctors;
+  const errors = submitted ? validateForm(v, PATIENT_SPEC, t) : {};
+  const nationalId = (v.nationalId || '').trim().toUpperCase();
+
+  const save = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, PATIENT_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('POST', '/patients', {
+        name: v.name.trim(), lastName: v.lastName.trim(), nationalId,
+        healthCardNumber: v.healthCardNumber.trim().toUpperCase(), socialSecurityNumber: v.socialSecurityNumber.trim(),
+        address: { street: v.street.trim(), city: v.city.trim(), postalCode: v.postalCode.trim(), province: v.province },
+        phone: v.phone.trim(), email: v.email.trim(), birthDate: displayToIso(v.birthDate),
+        healthCenterId: Number(v.healthCenterId), doctorId: Number(v.doctorId),
+        username: (v.username || '').trim() || nationalId,
+      });
+      onCreated();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  return (
+    <div className="create-form">
+      <div className="form-row">
+        <Field label={t('name')} name="name" values={v} onChange={setV} errors={errors} />
+        <Field label={t('lastName')} name="lastName" values={v} onChange={setV} errors={errors} />
+        <Field label={t('nationalId')} name="nationalId" values={v} onChange={setV} errors={errors} maxLength={9} placeholder="12345678Z" />
+      </div>
+      <div className="form-row">
+        <Field label={t('healthCardNumber')} name="healthCardNumber" values={v} onChange={setV} errors={errors} maxLength={14} placeholder="ABCD1234567890" />
+        <Field label={t('socialSecurityNumber')} name="socialSecurityNumber" values={v} onChange={setV} errors={errors}
+               inputMode="numeric" maxDigits={12} placeholder="360000010101" />
+      </div>
+      <div className="form-row">
+        <Field label={t('street')} name="street" values={v} onChange={setV} errors={errors} wide />
+      </div>
+      <div className="form-row">
+        <Field label={t('city')} name="city" values={v} onChange={setV} errors={errors} />
+        <PostalCodeField label={t('postalCode')} values={v} onChange={setV} errors={errors} />
+        <ProvinceSelect label={t('province')} values={v} onChange={setV} errors={errors} t={t} />
+      </div>
+      <div className="form-row">
+        <PhoneField label={t('phone')} name="phone" values={v} onChange={setV} errors={errors} />
+        <Field label={t('email')} name="email" values={v} onChange={setV} errors={errors} type="email" />
+        <DateField label={t('birthDate')} name="birthDate" values={v} onChange={setV} errors={errors} t={t}
+                   min="1900-01-01" max={localDateISO()} />
+      </div>
+      <div className="form-row">
+        <label>{t('healthCenter')}
+          <select value={v.healthCenterId} aria-invalid={errors.healthCenterId ? 'true' : undefined}
+                  onChange={e => setV({ ...v, healthCenterId: e.target.value, doctorId: doctorsOf(e.target.value)[0]?.id ?? '' })}>
+            {centers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <FieldError errors={errors} name="healthCenterId" />
+        </label>
+        <label>{t('assignedDoctor')}
+          <select value={v.doctorId} aria-invalid={errors.doctorId ? 'true' : undefined}
+                  onChange={e => setV({ ...v, doctorId: e.target.value })}>
+            {availableDoctors.map(d => <option key={d.id} value={d.id}>{d.name} {d.lastName}</option>)}
+          </select>
+          <FieldError errors={errors} name="doctorId" />
+        </label>
+        <Field label={t('username')} name="username" values={v} onChange={setV} errors={errors} placeholder={nationalId} />
+      </div>
+      <InfoNote>{t('patientPasswordNote', nationalId)}</InfoNote>
+      <button onClick={save}>{t('savePatient')}</button>
+      <Notice {...notice} />
+    </div>
+  );
+}
+
+
+function DoctorDirectory({ doctors, centers, filters, setFilters, onSelect, apiCall, onChanged, t }) {
+  const [creating, setCreating] = useState(false);
+  return (
+    <section>
+      <h2>{t('doctors')} <span className="action"><button onClick={() => setCreating(c => !c)}>{creating ? t('cancel') : t('newDoctor')}</button></span></h2>
+
+      <div className="filter-bar form-row">
+        <Field label={t('filterByName')} name="name" values={filters} onChange={setFilters} />
+        <label>{t('healthCenter')}
+          <select value={filters.healthCenterId || ''} onChange={e => setFilters({ ...filters, healthCenterId: e.target.value })}>
+            <option value="">{t('anyCenter')}</option>
+            {centers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+        </label>
+        <button onClick={() => setFilters({})}>{t('clearFilters')}</button>
+      </div>
+
+      {creating && <NewDoctorForm centers={centers} apiCall={apiCall} t={t} onCreated={() => { setCreating(false); onChanged(); }} />}
+      <div className="directory">
+        {doctors.map(d => (
+          <button key={d.id} className="person-card" onClick={() => onSelect(d.id)}>
+            <div className="name">{d.name} {d.lastName}</div>
+            <div className="detail">{t('licenseNumber')}: {d.licenseNumber}</div>
+            <div className="detail">{d.healthCenter ? d.healthCenter.name : ''}</div>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function NewDoctorForm({ centers, apiCall, onCreated, t }) {
+  const [v, setV] = useState({ healthCenterId: centers[0]?.id ?? '' });
+  const [submitted, setSubmitted] = useState(false);
+  const [notice, notify] = useNotice();
+  const errors = submitted ? validateForm(v, DOCTOR_SPEC, t) : {};
+  const licenseNumber = (v.licenseNumber || '').trim().toUpperCase();
+
+  const save = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, DOCTOR_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('POST', '/doctors', {
+        name: v.name.trim(), lastName: v.lastName.trim(), nationalId: v.nationalId.trim().toUpperCase(),
+        licenseNumber, phone: v.phone.trim(), email: v.email.trim(),
+        healthCenterId: Number(v.healthCenterId), username: (v.username || '').trim() || licenseNumber,
+      });
+      onCreated();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  return (
+    <div className="create-form">
+      <div className="form-row">
+        <Field label={t('name')} name="name" values={v} onChange={setV} errors={errors} />
+        <Field label={t('doctorLastName')} name="lastName" values={v} onChange={setV} errors={errors} />
+        <Field label={t('nationalId')} name="nationalId" values={v} onChange={setV} errors={errors} maxLength={9} placeholder="12345678Z" />
+        <Field label={t('licenseNumber')} name="licenseNumber" values={v} onChange={setV} errors={errors} maxLength={15} placeholder="LIC-4501" />
+      </div>
+      <div className="form-row">
+        <PhoneField label={t('phone')} name="phone" values={v} onChange={setV} errors={errors} />
+        <Field label={t('email')} name="email" values={v} onChange={setV} errors={errors} type="email" />
+        <label>{t('healthCenter')}
+          <select value={v.healthCenterId} aria-invalid={errors.healthCenterId ? 'true' : undefined}
+                  onChange={e => setV({ ...v, healthCenterId: e.target.value })}>
+            {centers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <FieldError errors={errors} name="healthCenterId" />
+        </label>
+        <Field label={t('username')} name="username" values={v} onChange={setV} errors={errors} placeholder={licenseNumber} />
+      </div>
+      <InfoNote>{t('initialPasswordNote', licenseNumber)}</InfoNote>
+      <button onClick={save}>{t('saveDoctor')}</button>
+      <Notice {...notice} />
+    </div>
+  );
+}
+
+
+function AdministratorsTab({ apiCall, t }) {
+  const [administrators, setAdministrators] = useState([]);
+  const [creating, setCreating] = useState(false);
+  const [v, setV] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [notice, notify] = useNotice();
+  const errors = submitted ? validateForm(v, ADMIN_SPEC, t) : {};
+
+  const load = useCallback(async () => {
+    try { setAdministrators(await apiCall('GET', '/administrators')); }
+    catch (e) { notify(e.message, true); }
+  }, [apiCall]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const save = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, ADMIN_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('POST', '/administrators', {
+        name: v.name.trim(), email: v.email.trim(), username: v.username.trim(), password: v.password,
+      });
+      setCreating(false); setSubmitted(false); setV({}); load();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  const deactivate = async (id) => {
+    try { await apiCall('DELETE', `/administrators/${id}`); load(); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  const active = administrators.filter(a => a.active);
+
+  return (
+    <section>
+      <h2>{t('administrators')} <span className="action"><button onClick={() => setCreating(c => !c)}>{creating ? t('cancel') : t('newAdministrator')}</button></span></h2>
+      {creating && (
+        <div className="create-form">
+          <div className="form-row">
+            <Field label={t('name')} name="name" values={v} onChange={setV} errors={errors} />
+            <Field label={t('email')} name="email" values={v} onChange={setV} type="email" errors={errors} />
+            <Field label={t('username')} name="username" values={v} onChange={setV} errors={errors} />
+            <Field label={t('initialPassword')} name="password" values={v} onChange={setV} errors={errors} />
+          </div>
+          <InfoNote>{t('administratorPasswordNote')}</InfoNote>
+          <button onClick={save}>{t('saveAdministrator')}</button>
+        </div>
+      )}
+      <table><tbody>
+        <tr><th>{t('username')}</th><th>{t('name')}</th><th>{t('email')}</th><th>{t('registeredCol')}</th><th></th></tr>
+        {active.map(a => (
+          <tr key={a.id}>
+            <td>{a.username}</td><td>{a.name}</td><td>{a.email}</td><td>{isoToDisplay(a.registrationDate)}</td>
+            <td><DeactivateButton name={a.name} t={t} onConfirm={() => deactivate(a.id)} /></td>
+          </tr>
+        ))}
+      </tbody></table>
+      <Notice {...notice} />
+    </section>
+  );
+}
+
+
+function AppointmentsAdminTab({ doctors, patients, apiCall, t }) {
+  const [day, setDay] = useState(todayISO());
+  const [doctorId, setDoctorId] = useState('');
+  const [patientId, setPatientId] = useState('');
+  const [appointments, setAppointments] = useState([]);
+  const [notice, notify] = useNotice();
+
+  const load = async () => {
+    try {
+      let path = `/appointments?day=${day}`;
+      if (doctorId) path += `&doctorId=${doctorId}`;
+      if (patientId) path += `&patientId=${patientId}`;
+      setAppointments(await apiCall('GET', path));
+    } catch (e) { notify(e.message, true); }
+  };
+
+  useEffect(() => { load(); }, []); // eslint-disable-line
+
+  const cancel = async (id) => {
+    try { await apiCall('POST', `/appointments/${id}/cancel`); load(); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  return (
+    <section>
+      <h2>{t('appointmentsAdmin')}</h2>
+      <div className="filter-bar form-row">
+        <label>{t('day')} <DateInput value={day} onChange={setDay} t={t} /></label>
+        <label>{t('doctorCol')}
+          <select value={doctorId} onChange={e => setDoctorId(e.target.value)}>
+            <option value="">{t('anyDoctor')}</option>
+            {doctors.map(d => <option key={d.id} value={d.id}>{d.name} {d.lastName}</option>)}
+          </select>
+        </label>
+        <label>{t('patientCol')}
+          <select value={patientId} onChange={e => setPatientId(e.target.value)}>
+            <option value="">{t('anyPatient')}</option>
+            {patients.map(p => <option key={p.id} value={p.id}>{p.name} {p.lastName}</option>)}
+          </select>
+        </label>
+        <button onClick={load}>{t('viewAppointments')}</button>
+      </div>
+      {appointments.length === 0 ? <p><em>{t('noAppointmentsThatDay')}</em></p> : (
+        <table><tbody>
+          <tr><th>{t('patientCol')}</th><th>{t('doctorCol')}</th><th>{t('dateTimeCol')}</th><th>{t('statusCol')}</th><th></th></tr>
+          {appointments.map(a => (
+            <tr key={a.id}>
+              <td>{a.patientName}</td><td>{a.doctorName}</td><td>{a.dateTime.slice(11, 16)}</td><td>{a.status}</td>
+              <td>{a.status === 'SCHEDULED' && <button className="danger" onClick={() => cancel(a.id)}>{t('cancelAppointment')}</button>}</td>
+            </tr>
+          ))}
+        </tbody></table>
+      )}
+      <Notice {...notice} />
+    </section>
+  );
+}
+
+
+function CentersTab({ apiCall, t }) {
+  const [centers, setCenters] = useState([]);
+  const [creating, setCreating] = useState(false);
+  const [v, setV] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [filters, setFilters] = useState({});
+  const [notice, notify] = useNotice();
+  const [selectedId, setSelectedId] = useState(null);
+  const errors = submitted ? validateForm(v, CENTER_SPEC, t) : {};
+
+  const load = useCallback(async () => {
+    try {
+      let path = '/health-centers';
+      if (filters.name) path += `?name=${encodeURIComponent(filters.name)}`;
+      else if (filters.city) path += `?city=${encodeURIComponent(filters.city)}`;
+      setCenters(await apiCall('GET', path));
+    } catch (e) { notify(e.message, true); }
+  }, [apiCall, filters]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const save = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, CENTER_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('POST', '/health-centers', {
+        name: v.name.trim(),
+        address: { street: v.street.trim(), city: v.city.trim(), postalCode: v.postalCode.trim(), province: v.province },
+        phone: v.phone.trim(), email: v.email.trim(),
+      });
+      setCreating(false); setSubmitted(false); setV({}); load();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  const deactivate = async (id) => {
+    try { await apiCall('DELETE', `/health-centers/${id}`); setSelectedId(null); load(); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  const active = centers.filter(c => c.active);
+  const center = active.find(c => c.id === selectedId);
+  if (center) {
+    return (
+      <section>
+        <BackButton onClick={() => setSelectedId(null)}>{t('backToCenters')}</BackButton>
+        <div className="profile">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="name" style={{ fontSize: '1.15rem' }}>{center.name}</div>
+            <DeactivateButton name={center.name} t={t} onConfirm={() => deactivate(center.id)} />
+          </div>
+          <dl>
+            <dt>{t('street')}</dt><dd>{center.address?.street || '—'}</dd>
+            <dt>{t('city')}</dt><dd>{center.address?.city || '—'}</dd>
+            <dt>{t('postalCode')}</dt><dd>{center.address?.postalCode || '—'}</dd>
+            <dt>{t('province')}</dt><dd>{center.address?.province || '—'}</dd>
+            <dt>{t('phone')}</dt><dd>{center.phone || '—'}</dd>
+            <dt>{t('email')}</dt><dd>{center.email || '—'}</dd>
+          </dl>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section>
+      <h2>{t('centers')} <span className="action"><button onClick={() => setCreating(c => !c)}>{creating ? t('cancel') : t('newCenter')}</button></span></h2>
+      <div className="filter-bar form-row">
+        <Field label={t('filterByName')} name="name" values={filters} onChange={setFilters} />
+        <Field label={t('filterByCity')} name="city" values={filters} onChange={setFilters} />
+        <button onClick={load}>{t('applyFilters')}</button>
+        <button className="secondary" onClick={() => { setFilters({}); }}>{t('clearFilters')}</button>
+      </div>
+      {creating && (
+        <div className="create-form">
+          <div className="form-row">
+            <Field label={t('name')} name="name" values={v} onChange={setV} errors={errors} wide />
+          </div>
+          <div className="form-row">
+            <Field label={t('street')} name="street" values={v} onChange={setV} errors={errors} wide />
+          </div>
+          <div className="form-row">
+            <Field label={t('city')} name="city" values={v} onChange={setV} errors={errors} />
+            <PostalCodeField label={t('postalCode')} values={v} onChange={setV} errors={errors} />
+            <ProvinceSelect label={t('province')} values={v} onChange={setV} errors={errors} t={t} />
+            <PhoneField label={t('phone')} name="phone" values={v} onChange={setV} errors={errors} />
+            <Field label={t('email')} name="email" values={v} onChange={setV} errors={errors} type="email" />
+          </div>
+          <button onClick={save}>{t('saveCenter')}</button>
+        </div>
+      )}
+      <table><tbody>
+        <tr><th>{t('name')}</th><th>{t('city')}</th><th>{t('phone')}</th><th></th></tr>
+        {active.map(c => (
+          <tr key={c.id}>
+            <td>{c.name}</td><td>{c.address?.city}</td><td>{c.phone}</td>
+            <td>
+              <button onClick={() => setSelectedId(c.id)}>{t('viewDetails')}</button>{' '}
+              <DeactivateButton name={c.name} t={t} onConfirm={() => deactivate(c.id)} />
+            </td>
+          </tr>
+        ))}
+      </tbody></table>
+      <Notice {...notice} />
+    </section>
+  );
+}
+
+function MedicationsTab({ apiCall, t }) {
+  const [medications, setMedications] = useState([]);
+  const [creating, setCreating] = useState(false);
+  const [v, setV] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [filters, setFilters] = useState({});
+  const [notice, notify] = useNotice();
+  const errors = submitted ? validateForm(v, MEDICATION_SPEC, t) : {};
+
+  const load = useCallback(async () => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.brandName) params.set('brandName', filters.brandName);
+      if (filters.activeIngredient) params.set('activeIngredient', filters.activeIngredient);
+      if (filters.manufacturer) params.set('manufacturer', filters.manufacturer);
+      if (filters.category) params.set('category', filters.category);
+      const qs = params.toString();
+      setMedications(await apiCall('GET', '/medications' + (qs ? `?${qs}` : '')));
+    } catch (e) { notify(e.message, true); }
+  }, [apiCall, filters]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const save = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, MEDICATION_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('POST', '/medications', {
+        brandName: v.brandName.trim(), activeIngredient: v.activeIngredient.trim(),
+        manufacturer: v.manufacturer.trim(), category: v.category.trim(), unitsPerPackage: Number(v.unitsPerPackage),
+      });
+      setCreating(false); setSubmitted(false); setV({}); load();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  const deactivate = async (id) => {
+    try { await apiCall('DELETE', `/medications/${id}`); load(); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  const active = medications.filter(m => m.active);
+
+  return (
+    <section>
+      <h2>{t('medications')} <span className="action"><button onClick={() => setCreating(c => !c)}>{creating ? t('cancel') : t('newMedication')}</button></span></h2>
+      <div className="filter-bar form-row">
+        <Field label={t('brandName')} name="brandName" values={filters} onChange={setFilters} />
+        <Field label={t('activeIngredient')} name="activeIngredient" values={filters} onChange={setFilters} />
+        <Field label={t('manufacturer')} name="manufacturer" values={filters} onChange={setFilters} />
+        <Field label={t('category')} name="category" values={filters} onChange={setFilters} />
+        <button onClick={load}>{t('applyFilters')}</button>
+        <button className="secondary" onClick={() => setFilters({})}>{t('clearFilters')}</button>
+      </div>
+      {creating && (
+        <div className="create-form">
+          <div className="form-row">
+            <Field label={t('brandName')} name="brandName" values={v} onChange={setV} errors={errors} />
+            <Field label={t('activeIngredient')} name="activeIngredient" values={v} onChange={setV} errors={errors} />
+          </div>
+          <div className="form-row">
+            <Field label={t('manufacturer')} name="manufacturer" values={v} onChange={setV} errors={errors} />
+            <Field label={t('category')} name="category" values={v} onChange={setV} errors={errors} />
+            <Field label={t('unitsPerPackage')} name="unitsPerPackage" values={v} onChange={setV} errors={errors} type="number" min="1" max="1000" step="1" />
+          </div>
+          <button onClick={save}>{t('saveMedication')}</button>
+        </div>
+      )}
+      <table><tbody>
+        <tr><th>{t('brandName')}</th><th>{t('activeIngredient')}</th><th>{t('manufacturer')}</th><th>{t('category')}</th><th>{t('unitsPerPackage')}</th><th></th></tr>
+        {active.map(m => (
+          <tr key={m.id}>
+            <td>{m.brandName}</td><td>{m.activeIngredient}</td><td>{m.manufacturer}</td><td>{m.category}</td><td>{m.unitsPerPackage}</td>
+            <td><DeactivateButton name={m.brandName} t={t} onConfirm={() => deactivate(m.id)} /></td>
+          </tr>
+        ))}
+      </tbody></table>
+      <Notice {...notice} />
+    </section>
+  );
+}
+
+function PharmaciesTab({ apiCall, t }) {
+  const [pharmacies, setPharmacies] = useState([]);
+  const [creating, setCreating] = useState(false);
+  const [v, setV] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [filters, setFilters] = useState({});
+  const [notice, notify] = useNotice();
+  const [selectedId, setSelectedId] = useState(null);
+  const errors = submitted ? validateForm(v, PHARMACY_SPEC, t) : {};
+  const taxId = (v.taxId || '').trim().toUpperCase();
+  const pharmacistLicense = (v.pharmacistLicenseNumber || '').trim().toUpperCase();
+
+  const load = useCallback(async () => {
+    try {
+      let path = '/pharmacies';
+      if (filters.name) path += `?name=${encodeURIComponent(filters.name)}`;
+      setPharmacies(await apiCall('GET', path));
+    } catch (e) { notify(e.message, true); }
+  }, [apiCall, filters]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const save = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, PHARMACY_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('POST', '/pharmacies', {
+        name: v.name.trim(), pharmacistFirstName: v.pharmacistFirstName.trim(), pharmacistLastName: v.pharmacistLastName.trim(),
+        taxId, pharmacistLicenseNumber: pharmacistLicense,
+        address: { street: v.street.trim(), city: v.city.trim(), postalCode: v.postalCode.trim(), province: v.province },
+        phone: v.phone.trim(), email: v.email.trim(), username: (v.username || '').trim() || taxId,
+      });
+      setCreating(false); setSubmitted(false); setV({}); load();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  const deactivate = async (id) => {
+    try { await apiCall('DELETE', `/pharmacies/${id}`); setSelectedId(null); load(); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  const active = pharmacies.filter(f => f.active);
+  const pharmacy = active.find(f => f.id === selectedId);
+  if (pharmacy) {
+    return (
+      <section>
+        <BackButton onClick={() => setSelectedId(null)}>{t('backToPharmacies')}</BackButton>
+        <div className="profile">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div className="name" style={{ fontSize: '1.15rem' }}>{pharmacy.name}</div>
+            <DeactivateButton name={pharmacy.name} t={t} onConfirm={() => deactivate(pharmacy.id)} />
+          </div>
+          <dl>
+            <dt>{t('pharmacist')}</dt><dd>{pharmacy.pharmacistFirstName} {pharmacy.pharmacistLastName}</dd>
+            <dt>{t('taxId')}</dt><dd>{pharmacy.taxId || '—'}</dd>
+            <dt>{t('licenseNumber')}</dt><dd>{pharmacy.pharmacistLicenseNumber || '—'}</dd>
+            <dt>{t('street')}</dt><dd>{pharmacy.address?.street || '—'}</dd>
+            <dt>{t('city')}</dt><dd>{pharmacy.address?.city || '—'}</dd>
+            <dt>{t('postalCode')}</dt><dd>{pharmacy.address?.postalCode || '—'}</dd>
+            <dt>{t('province')}</dt><dd>{pharmacy.address?.province || '—'}</dd>
+            <dt>{t('phone')}</dt><dd>{pharmacy.phone || '—'}</dd>
+            <dt>{t('email')}</dt><dd>{pharmacy.email || '—'}</dd>
+            <dt>{t('username')}</dt><dd>{pharmacy.username || '—'}</dd>
+          </dl>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section>
+      <h2>{t('pharmacies')} <span className="action"><button onClick={() => setCreating(c => !c)}>{creating ? t('cancel') : t('newPharmacy')}</button></span></h2>
+      <div className="filter-bar form-row">
+        <Field label={t('filterByName')} name="name" values={filters} onChange={setFilters} />
+        <button onClick={load}>{t('applyFilters')}</button>
+        <button className="secondary" onClick={() => setFilters({})}>{t('clearFilters')}</button>
+      </div>
+      {creating && (
+        <div className="create-form">
+          <div className="form-row">
+            <Field label={t('establishmentName')} name="name" values={v} onChange={setV} errors={errors} wide />
+          </div>
+          <div className="form-row">
+            <Field label={t('pharmacistFirstName')} name="pharmacistFirstName" values={v} onChange={setV} errors={errors} />
+            <Field label={t('pharmacistLastName')} name="pharmacistLastName" values={v} onChange={setV} errors={errors} />
+            <Field label={t('taxId')} name="taxId" values={v} onChange={setV} errors={errors} maxLength={9} placeholder="12345678Z" />
+            <Field label={t('licenseNumber')} name="pharmacistLicenseNumber" values={v} onChange={setV} errors={errors} maxLength={15} placeholder="PLIC-778899" />
+          </div>
+          <div className="form-row">
+            <Field label={t('street')} name="street" values={v} onChange={setV} errors={errors} wide />
+          </div>
+          <div className="form-row">
+            <Field label={t('city')} name="city" values={v} onChange={setV} errors={errors} />
+            <PostalCodeField label={t('postalCode')} values={v} onChange={setV} errors={errors} />
+            <ProvinceSelect label={t('province')} values={v} onChange={setV} errors={errors} t={t} />
+            <PhoneField label={t('phone')} name="phone" values={v} onChange={setV} errors={errors} />
+            <Field label={t('email')} name="email" values={v} onChange={setV} errors={errors} type="email" />
+          </div>
+          <div className="form-row">
+            <Field label={t('username')} name="username" values={v} onChange={setV} errors={errors} placeholder={taxId} />
+          </div>
+          <InfoNote>{t('pharmacyPasswordNote', pharmacistLicense)}</InfoNote>
+          <button onClick={save}>{t('savePharmacy')}</button>
+        </div>
+      )}
+      <table><tbody>
+        <tr><th>{t('name')}</th><th>{t('pharmacist')}</th><th>{t('city')}</th><th></th></tr>
+        {active.map(f => (
+          <tr key={f.id}>
+            <td>{f.name}</td><td>{f.pharmacistFirstName} {f.pharmacistLastName}</td><td>{f.address?.city}</td>
+            <td>
+              <button onClick={() => setSelectedId(f.id)}>{t('viewDetails')}</button>{' '}
+              <DeactivateButton name={f.name} t={t} onConfirm={() => deactivate(f.id)} />
+            </td>
+          </tr>
+        ))}
+      </tbody></table>
+      <Notice {...notice} />
+    </section>
+  );
+}
+
+
+function AdministratorHome({ apiCall, t }) {
+  const [tab, setTab] = useState('administrators');
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [centers, setCenters] = useState([]);
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
+  const [selectedDoctorId, setSelectedDoctorId] = useState(null);
+  const [patientFilters, setPatientFilters] = useState({});
+  const [doctorFilters, setDoctorFilters] = useState({});
+  const [notice, notify] = useNotice();
+
+  const loadDirectories = useCallback(async () => {
+    try {
+      const [ps, ds, cs] = await Promise.all([apiCall('GET', '/patients'), apiCall('GET', '/doctors'), apiCall('GET', '/health-centers')]);
+      setPatients(ps); setDoctors(ds); setCenters(cs);
+    } catch (e) { notify(e.message, true); }
+  }, [apiCall]);
+
+  useEffect(() => { loadDirectories(); }, [loadDirectories]);
+
+  const activePatients = patients.filter(p => p.active).filter(p =>
+    (!patientFilters.name || p.name.toLowerCase().includes(patientFilters.name.toLowerCase())) &&
+    (!patientFilters.healthCenterId || (p.healthCenter && String(p.healthCenter.id) === String(patientFilters.healthCenterId))) &&
+    (!patientFilters.doctorId || (p.doctor && String(p.doctor.id) === String(patientFilters.doctorId))));
+  const activeDoctors = doctors.filter(d => d.active).filter(d =>
+    (!doctorFilters.name || d.name.toLowerCase().includes(doctorFilters.name.toLowerCase())) &&
+    (!doctorFilters.healthCenterId || (d.healthCenter && String(d.healthCenter.id) === String(doctorFilters.healthCenterId))));
+  const activeCenters = centers.filter(c => c.active);
+
+  const selectedPatient = patients.find(p => p.id === selectedPatientId);
+  const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
+  const doctorPatients = selectedDoctor ? patients.filter(p => p.active && p.doctor && p.doctor.id === selectedDoctor.id) : [];
+
+  const tabs = [
+    ['administrators', t('tabAdministrators')],
+    ['centers', t('tabCenters')],
+    ['doctors', t('tabDoctors')],
+    ['patients', t('tabPatients')],
+    ['pharmacies', t('tabPharmacies')],
+    ['appointments', t('tabAppointments')],
+    ['medications', t('tabMedications')],
+  ];
+
+  return (
+    <div>
+      <div className="tabs">
+        {tabs.map(([id, label]) => (
+          <button key={id} className={tab === id ? '' : 'inactive'}
+                  onClick={() => { setTab(id); setSelectedPatientId(null); setSelectedDoctorId(null); }}>{label}</button>
+        ))}
+      </div>
+      <Notice {...notice} />
+
+      {tab === 'administrators' && <AdministratorsTab apiCall={apiCall} t={t} />}
+      {tab === 'centers' && <CentersTab apiCall={apiCall} t={t} />}
+
+      {tab === 'doctors' && (
+        selectedDoctor
+          ? <AdminDoctorDetail doctor={selectedDoctor} apiCall={apiCall} t={t}
+              onBack={() => setSelectedDoctorId(null)} onDeactivated={() => { setSelectedDoctorId(null); loadDirectories(); }} />
+          : <DoctorDirectory doctors={activeDoctors} centers={activeCenters} filters={doctorFilters} setFilters={setDoctorFilters}
+              onSelect={setSelectedDoctorId} apiCall={apiCall} onChanged={loadDirectories} t={t} />
+      )}
+
+      {tab === 'patients' && (
+        selectedPatient
+          ? <AdminPatientDetail patient={selectedPatient} apiCall={apiCall} t={t}
+              onBack={() => setSelectedPatientId(null)} onDeactivated={() => { setSelectedPatientId(null); loadDirectories(); }} />
+          : <PatientDirectory patients={activePatients} centers={activeCenters} doctors={activeDoctors} filters={patientFilters} setFilters={setPatientFilters}
+              onSelect={setSelectedPatientId} apiCall={apiCall} onChanged={loadDirectories} t={t} />
+      )}
+
+      {tab === 'pharmacies' && <PharmaciesTab apiCall={apiCall} t={t} />}
+      {tab === 'appointments' && <AppointmentsAdminTab doctors={activeDoctors} patients={activePatients} apiCall={apiCall} t={t} />}
+      {tab === 'medications' && <MedicationsTab apiCall={apiCall} t={t} />}
+    </div>
+  );
+}
+
+function AdminPatientDetail({ patient, apiCall, onBack, onDeactivated, t }) {
+  const deactivate = async () => { await apiCall('DELETE', `/patients/${patient.id}`); onDeactivated(); };
+  return (
+    <section>
+      <BackButton onClick={onBack}>{t('backToPatients')}</BackButton>
+      <div className="profile">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="name" style={{ fontSize: '1.15rem' }}>{patient.name} {patient.lastName}</div>
+          <DeactivateButton name={`${patient.name} ${patient.lastName}`} t={t} onConfirm={deactivate} />
+        </div>
+        <dl>
+          <dt>{t('nationalId')}</dt><dd>{patient.nationalId}</dd>
+          <dt>{t('phone')}</dt><dd>{patient.phone || '—'}</dd>
+          <dt>{t('email')}</dt><dd>{patient.email || '—'}</dd>
+          <dt>{t('street')}</dt><dd>{patient.address ? `${patient.address.street}, ${patient.address.city} (${patient.address.postalCode})` : '—'}</dd>
+          <dt>{t('birthDate')}</dt><dd>{isoToDisplay(patient.birthDate) || '—'}</dd>
+          <dt>{t('healthCardNumber')}</dt><dd>{patient.healthCardNumber || '—'}</dd>
+          <dt>{t('healthCenter')}</dt><dd>{patient.healthCenter ? patient.healthCenter.name : '—'}</dd>
+          <dt>{t('assignedDoctor')}</dt><dd>{patient.doctor ? `${patient.doctor.name} ${patient.doctor.lastName}` : '—'}</dd>
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+function AdminDoctorDetail({ doctor, apiCall, onBack, onDeactivated, t }) {
+  const deactivate = async () => { await apiCall('DELETE', `/doctors/${doctor.id}`); onDeactivated(); };
+  return (
+    <section>
+      <BackButton onClick={onBack}>{t('backToDoctors')}</BackButton>
+      <div className="profile">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div className="name" style={{ fontSize: '1.15rem' }}>{doctor.name} {doctor.lastName}</div>
+          <DeactivateButton name={`${doctor.name} ${doctor.lastName}`} t={t} onConfirm={deactivate} />
+        </div>
+        <dl>
+          <dt>{t('nationalId')}</dt><dd>{doctor.nationalId}</dd>
+          <dt>{t('licenseNumber')}</dt><dd>{doctor.licenseNumber}</dd>
+          <dt>{t('phone')}</dt><dd>{doctor.phone || '—'}</dd>
+          <dt>{t('email')}</dt><dd>{doctor.email || '—'}</dd>
+          <dt>{t('healthCenter')}</dt><dd>{doctor.healthCenter ? doctor.healthCenter.name : '—'}</dd>
+        </dl>
+      </div>
+    </section>
+  );
+}
+
+
+function DoctorHome({ session, apiCall, t }) {
+  const [view, setView] = useState('schedule'); // 'schedule' | 'attend' | 'profile'
+  const [doctor, setDoctor] = useState(null);
+  const [scheduleDay, setScheduleDay] = useState(todayISO());
+  const [schedule, setSchedule] = useState([]);
+  const [attending, setAttending] = useState(null);
+  const [notice, notify] = useNotice();
+
+  const loadDoctor = useCallback(async () => {
+    try { setDoctor(await apiCall('GET', `/doctors/${session.id}`)); }
+    catch (e) { notify(e.message, true); }
+  }, [apiCall, session.id]);
+
+  const loadSchedule = useCallback(async () => {
+    try { setSchedule(await apiCall('GET', `/doctors/${session.id}/schedule?day=${scheduleDay}`)); }
+    catch (e) { notify(e.message, true); }
+  }, [apiCall, session.id, scheduleDay]);
+
+  useEffect(() => { loadDoctor(); }, [loadDoctor]);
+  useEffect(() => { if (view === 'schedule') loadSchedule(); }, [view, loadSchedule]);
+
+  const updateAppointment = async (id, action) => {
+    try { await apiCall('POST', `/appointments/${id}/${action}`); loadSchedule(); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  if (!doctor) return <Notice {...notice} />;
+
+  return (
+    <div>
+      <div className="tabs">
+        <button className={view === 'schedule' || view === 'attend' ? '' : 'inactive'} onClick={() => setView('schedule')}>{t('mySchedule')}</button>
+        <button className={view === 'profile' ? '' : 'inactive'} onClick={() => setView('profile')}>{t('myProfile')}</button>
+      </div>
+      <Notice {...notice} />
+
+      {view === 'schedule' && (
+        <section>
+          <h2>{t('mySchedule')}</h2>
+          <div className="form-row">
+            <label>{t('day')} <DateInput value={scheduleDay} onChange={setScheduleDay} t={t} /></label>
+            <button onClick={loadSchedule}>{t('viewSchedule')}</button>
+          </div>
+          {schedule.length === 0 ? <p><em>{t('noAppointmentsThatDay')}</em></p> : (
+            <table><tbody>
+              <tr><th>{t('patientCol')}</th><th>{t('dateTimeCol')}</th><th>{t('statusCol')}</th><th></th></tr>
+              {schedule.map(a => (
+                <tr key={a.id}>
+                  <td>{a.patientName}</td><td>{a.dateTime.slice(11, 16)}</td><td>{a.status}</td>
+                  <td>{a.status === 'SCHEDULED' && <>
+                    <button onClick={() => { setAttending(a); setView('attend'); }}>{t('attend')}</button>{' '}
+                    <button className="secondary" onClick={() => updateAppointment(a.id, 'no-show')}>{t('noShow')}</button>
+                  </>}</td>
+                </tr>
+              ))}
+            </tbody></table>
+          )}
+        </section>
+      )}
+
+      {view === 'attend' && attending && (
+        <AppointmentAttention appointment={attending} doctor={doctor} apiCall={apiCall} t={t}
+          onBack={() => { setAttending(null); setView('schedule'); }}
+          onCompleted={() => { setAttending(null); setView('schedule'); }} />
+      )}
+
+      {view === 'profile' && <DoctorProfileEditor doctor={doctor} apiCall={apiCall} t={t} onSaved={loadDoctor} />}
+    </div>
+  );
+}
+
+function AppointmentAttention({ appointment, doctor, apiCall, onBack, onCompleted, t }) {
+  const [patient, setPatient] = useState(null);
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [creatingRx, setCreatingRx] = useState(false);
+  const [notice, notify] = useNotice();
+
+  const load = useCallback(async () => {
+    try {
+      const [p, rx] = await Promise.all([
+        apiCall('GET', `/patients/${appointment.patientId}`),
+        apiCall('GET', `/patients/${appointment.patientId}/prescriptions`),
+      ]);
+      setPatient(p); setPrescriptions(rx);
+    } catch (e) { notify(e.message, true); }
+  }, [apiCall, appointment.patientId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const cancelPrescription = async (id) => {
+    try { await apiCall('POST', `/prescriptions/${id}/cancel`); load(); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  const completeVisit = async () => {
+    try { await apiCall('POST', `/appointments/${appointment.id}/complete`); onCompleted(); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  if (!patient) return <Notice {...notice} />;
+
+  return (
+    <section>
+      <BackButton onClick={onBack}>{t('backToSchedule')}</BackButton>
+      <h2>{t('appointmentAttention')}</h2>
+
+      <div className="profile">
+        <div className="name" style={{ fontSize: '1.15rem' }}>{patient.name} {patient.lastName}</div>
+        <dl>
+          <dt>{t('birthDate')}</dt><dd>{isoToDisplay(patient.birthDate) || '—'}</dd>
+          <dt>{t('street')}</dt><dd>{patient.address ? `${patient.address.street}, ${patient.address.city}` : '—'}</dd>
+        </dl>
+      </div>
+
+      <h2>{t('activePrescriptions')}</h2>
+      {prescriptions.length === 0 ? <p><em>{t('noActivePrescriptions')}</em></p> : (
+        <table><tbody>
+          <tr><th>{t('medicationCol')}</th><th>{t('doseCol')}</th><th>{t('periodCol')}</th><th></th></tr>
+          {prescriptions.map(rx => (
+            <tr key={rx.id}>
+              <td>{rx.medicationBrandName}</td><td>{rx.dailyDose}</td>
+              <td>{isoToDisplay(rx.startDate)} → {isoToDisplay(rx.endDate)}</td>
+              <td><button className="danger" onClick={() => cancelPrescription(rx.id)}>{t('cancelPrescription')}</button></td>
+            </tr>
+          ))}
+        </tbody></table>
+      )}
+
+      <h2>{t('createPrescription')} <span className="action"><button onClick={() => setCreatingRx(c => !c)}>{creatingRx ? t('cancel') : t('newPrescriptionBtn')}</button></span></h2>
+      {creatingRx && (
+        <NewPrescriptionForm patientId={patient.id} doctorId={doctor.id} apiCall={apiCall} t={t}
+          onCreated={() => { setCreatingRx(false); load(); }} />
+      )}
+
+      <div className="form-row">
+        <button onClick={completeVisit}>{t('completeAppointment')}</button>
+      </div>
+
+      <Notice {...notice} />
+    </section>
+  );
+}
+
+function NewPrescriptionForm({ patientId, doctorId, apiCall, onCreated, t }) {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+  const [selectedMedication, setSelectedMedication] = useState(null);
+  const [dose, setDose] = useState('2');
+  const [instructions, setInstructions] = useState('');
+  const [endDate, setEndDate] = useState(isoToDisplay(monthsFromNowISO(2))); // DD/MM/YYYY
+  const [plan, setPlan] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [notice, notify] = useNotice();
+  const prescriptionValues = { dose, endDate, instructions };
+  const errors = submitted ? validateForm(prescriptionValues, PRESCRIPTION_SPEC, t) : {};
+
+  const searchMedications = async () => {
+    try { setResults(await apiCall('GET', `/medications?brandName=${encodeURIComponent(query)}`)); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  const create = async () => {
+    if (!selectedMedication) { notify(t('selectMedicationFirst'), true); return; }
+    setSubmitted(true);
+    if (hasErrors(validateForm(prescriptionValues, PRESCRIPTION_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      const prescription = await apiCall('POST', '/prescriptions', {
+        patientId, doctorId, medicationId: selectedMedication.id, dailyDose: Number(dose),
+        instructions: instructions.trim(), endDate: displayToIso(endDate),
+      });
+      setPlan(prescription.refills);
+      notify(t('planCreated'));
+      onCreated();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  return (
+    <div className="create-form">
+      <div className="form-row">
+        <label className="wide">{t('searchMedication')}
+          <input className="wide" value={query} placeholder="e.g. Ibuprofen" onChange={e => setQuery(e.target.value)} />
+        </label>
+        <button onClick={searchMedications}>{t('search')}</button>
+      </div>
+      {results.length > 0 && (
+        <table><tbody>
+          <tr><th>{t('brandName')}</th><th>{t('activeIngredient')}</th><th>{t('manufacturer')}</th></tr>
+          {results.map(m => (
+            <tr key={m.id} className={`medication-result ${selectedMedication?.id === m.id ? 'selected' : ''}`}
+                onClick={() => setSelectedMedication(m)}>
+              <td>{m.brandName}</td><td>{m.activeIngredient}</td><td>{m.manufacturer}</td>
+            </tr>
+          ))}
+        </tbody></table>
+      )}
+      <div className="form-row">
+        <label>{t('selectedMedication')} <input readOnly value={selectedMedication ? selectedMedication.brandName : ''} /></label>
+        <label>{t('dailyDose')} <input type="number" step="0.5" min="0.5" max="100" value={dose} onChange={e => setDose(e.target.value)} size="4"
+                                        aria-invalid={errors.dose ? 'true' : undefined} /><FieldError errors={errors} name="dose" /></label>
+        <DateField label={t('endDate')} name="endDate" values={prescriptionValues} onChange={nv => setEndDate(nv.endDate)}
+                   errors={errors} t={t} />
+      </div>
+      <div className="form-row">
+        <label className="wide">{t('instructions')}
+          <input className="wide" value={instructions} placeholder={t('instructionsPlaceholder')} maxLength={255} onChange={e => setInstructions(e.target.value)}
+                 aria-invalid={errors.instructions ? 'true' : undefined} />
+          <FieldError errors={errors} name="instructions" />
+        </label>
+      </div>
+      <button onClick={create} disabled={!selectedMedication}>{t('createPrescriptionAndPlan')}</button>
+      {plan && (
+        <table><tbody>
+          <tr><th>{t('validFromCol')}</th><th>{t('validUntilCol')}</th><th>{t('boxesCol')}</th><th>{t('statusCol')}</th></tr>
+          {plan.map(r => <tr key={r.id}><td>{isoToDisplay(r.validFrom)}</td><td>{isoToDisplay(r.validUntil)}</td><td>{r.boxes}</td><td>{r.status}</td></tr>)}
+        </tbody></table>
+      )}
+      <Notice {...notice} />
+    </div>
+  );
+}
+
+function DoctorProfileEditor({ doctor, apiCall, onSaved, t }) {
+  const [v, setV] = useState({ name: doctor.name, lastName: doctor.lastName, phone: doctor.phone, email: doctor.email });
+  const [submitted, setSubmitted] = useState(false);
+  const [notice, notify] = useNotice();
+  const errors = submitted ? validateForm(v, DOCTOR_PROFILE_SPEC, t) : {};
+
+  const save = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, DOCTOR_PROFILE_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('PATCH', `/doctors/${doctor.id}/profile`, {
+        name: v.name.trim(), lastName: v.lastName.trim(), phone: v.phone.trim(), email: v.email.trim(),
+      });
+      notify(t('profileUpdated'));
+      onSaved();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  return (
+    <section>
+      <h2>{t('myProfile')}</h2>
+      <div className="form-row">
+        <Field label={t('name')} name="name" values={v} onChange={setV} errors={errors} />
+        <Field label={t('doctorLastName')} name="lastName" values={v} onChange={setV} errors={errors} />
+        <PhoneField label={t('phone')} name="phone" values={v} onChange={setV} errors={errors} />
+        <Field label={t('email')} name="email" values={v} onChange={setV} errors={errors} type="email" />
+      </div>
+      <button onClick={save}>{t('saveProfile')}</button>
+      <Notice {...notice} />
+
+      <h2>{t('changePassword')}</h2>
+      <PasswordChangeForm apiCall={apiCall} endpoint={`/doctors/${doctor.id}/password`} t={t} />
+    </section>
+  );
+}
+
+
+function PatientHome({ session, apiCall, t }) {
+  const [view, setView] = useState('appointments');
+  const [patient, setPatient] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const [day, setDay] = useState(todayISO());
+  const [slots, setSlots] = useState(null);
+  const [pendingSlot, setPendingSlot] = useState(null); // slot awaiting inline confirmation
+  const [refills, setRefills] = useState([]);
+  const [notice, notify] = useNotice();
+
+  const loadPatient = useCallback(async () => {
+    try { setPatient(await apiCall('GET', `/patients/${session.id}`)); }
+    catch (e) { notify(e.message, true); }
+  }, [apiCall, session.id]);
+
+  const loadAppointments = useCallback(async () => {
+    try { setAppointments(await apiCall('GET', `/patients/${session.id}/appointments`)); }
+    catch (e) { notify(e.message, true); }
+  }, [apiCall, session.id]);
+
+  const loadRefills = useCallback(async () => {
+    try { setRefills(await apiCall('GET', `/patients/${session.id}/refills`)); }
+    catch (e) { notify(e.message, true); }
+  }, [apiCall, session.id]);
+
+  useEffect(() => { loadPatient(); loadAppointments(); loadRefills(); }, [loadPatient, loadAppointments, loadRefills]);
+
+  const viewSlots = async () => {
+    setPendingSlot(null);
+    try { setSlots(await apiCall('GET', `/patients/${session.id}/available-slots?day=${day}`)); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  // The patient first picks a slot, then confirms it in an inline panel (no browser pop-up);
+  // only then is the appointment created.
+  const confirmBooking = async () => {
+    const dateTime = pendingSlot;
+    try {
+      await apiCall('POST', '/appointments', { patientId: session.id, dateTime });
+      notify(t('appointmentConfirmed', dateTime.slice(11, 16)));
+      setPendingSlot(null);
+      viewSlots(); loadAppointments();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  const cancelAppointment = async (id) => {
+    try { await apiCall('POST', `/appointments/${id}/cancel`); loadAppointments(); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  if (!patient) return <Notice {...notice} />;
+
+  return (
+    <div>
+      <div className="tabs">
+        <button className={view === 'appointments' ? '' : 'inactive'} onClick={() => setView('appointments')}>{t('myAppointments')}</button>
+        <button className={view === 'refills' ? '' : 'inactive'} onClick={() => setView('refills')}>{t('myPendingRefills')}</button>
+        <button className={view === 'profile' ? '' : 'inactive'} onClick={() => setView('profile')}>{t('myProfile')}</button>
+      </div>
+      <Notice {...notice} />
+
+      {view === 'appointments' && (
+        <section>
+          <h2>{t('myAppointments')}</h2>
+          {appointments.length === 0 ? <em>{t('noAppointments')}</em> : (
+            <table><tbody>
+              <tr><th>{t('doctorCol')}</th><th>{t('dateTimeCol')}</th><th>{t('statusCol')}</th><th></th></tr>
+              {appointments.map(a => (
+                <tr key={a.id}>
+                  <td>{a.doctorName}</td><td>{isoToDisplayDateTime(a.dateTime)}</td><td>{a.status}</td>
+                  <td>{a.status === 'SCHEDULED' && <button className="danger" onClick={() => cancelAppointment(a.id)}>{t('cancelAppointment')}</button>}</td>
+                </tr>
+              ))}
+            </tbody></table>
+          )}
+
+          <h2>{t('bookAppointment')}</h2>
+          <div className="form-row">
+            <label>{t('day')} <DateInput value={day} onChange={setDay} t={t} /></label>
+            <button onClick={viewSlots}>{t('viewAvailableSlots')}</button>
+          </div>
+          <div className="slots">
+            {slots === null ? null : slots.length === 0
+              ? <em>{t('noSlotsAvailable')}</em>
+              : slots.map(s => (
+                <button key={s.start} className={pendingSlot === s.start ? 'selected-slot' : ''}
+                        onClick={() => setPendingSlot(s.start)}>{s.start.slice(11, 16)}</button>
+              ))}
+          </div>
+          {pendingSlot && (
+            <div className="confirm-panel">
+              <span>{t('confirmBooking', pendingSlot.slice(11, 16), isoToDisplay(pendingSlot))}</span>
+              <div className="confirm-actions">
+                <button onClick={confirmBooking}>{t('confirmBookingBtn')}</button>
+                <button className="secondary" onClick={() => setPendingSlot(null)}>{t('cancel')}</button>
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {view === 'refills' && (
+        <section>
+          <h2>{t('myPendingRefills')}</h2>
+          {refills.length === 0 ? <p><em>{t('noPendingRefills')}</em></p> : (
+            <table><tbody>
+              <tr><th>{t('medicationCol')}</th><th>{t('activeIngredient')}</th><th>{t('manufacturer')}</th><th>{t('doctorCol')}</th><th>{t('validityCol')}</th><th>{t('boxesCol')}</th></tr>
+              {refills.map(r => (
+                <tr key={r.id}>
+                  <td>{r.medicationBrandName}</td><td>{r.medicationActiveIngredient}</td><td>{r.medicationManufacturer}</td>
+                  <td>{r.doctorName}</td><td>{isoToDisplay(r.validFrom)} → {isoToDisplay(r.validUntil)}</td><td>{r.boxes}</td>
+                </tr>
+              ))}
+            </tbody></table>
+          )}
+        </section>
+      )}
+
+      {view === 'profile' && <PatientProfileEditor patient={patient} apiCall={apiCall} t={t} onSaved={loadPatient} />}
+    </div>
+  );
+}
+
+function PatientProfileEditor({ patient, apiCall, onSaved, t }) {
+  const [v, setV] = useState({
+    name: patient.name, lastName: patient.lastName, phone: patient.phone, email: patient.email,
+    street: patient.address?.street, city: patient.address?.city, postalCode: patient.address?.postalCode, province: patient.address?.province,
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [notice, notify] = useNotice();
+  const errors = submitted ? validateForm(v, PATIENT_PROFILE_SPEC, t) : {};
+
+  const save = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, PATIENT_PROFILE_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('PATCH', `/patients/${patient.id}/profile`, {
+        name: v.name.trim(), lastName: v.lastName.trim(), phone: v.phone.trim(), email: v.email.trim(),
+        address: { street: v.street.trim(), city: v.city.trim(), postalCode: v.postalCode.trim(), province: v.province },
+      });
+      notify(t('profileUpdated'));
+      onSaved();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  return (
+    <section>
+      <h2>{t('myProfile')}</h2>
+      <div className="form-row">
+        <Field label={t('name')} name="name" values={v} onChange={setV} errors={errors} />
+        <Field label={t('lastName')} name="lastName" values={v} onChange={setV} errors={errors} />
+        <PhoneField label={t('phone')} name="phone" values={v} onChange={setV} errors={errors} />
+        <Field label={t('email')} name="email" values={v} onChange={setV} errors={errors} type="email" />
+      </div>
+      <div className="form-row">
+        <Field label={t('street')} name="street" values={v} onChange={setV} errors={errors} wide />
+      </div>
+      <div className="form-row">
+        <Field label={t('city')} name="city" values={v} onChange={setV} errors={errors} />
+        <PostalCodeField label={t('postalCode')} values={v} onChange={setV} errors={errors} />
+        <ProvinceSelect label={t('province')} values={v} onChange={setV} errors={errors} t={t} />
+      </div>
+      <button onClick={save}>{t('saveProfile')}</button>
+      <Notice {...notice} />
+
+      <h2>{t('changePassword')}</h2>
+      <PasswordChangeForm apiCall={apiCall} endpoint={`/patients/${patient.id}/password`} t={t} />
+    </section>
+  );
+}
+
+
+function PharmacyHome({ session, apiCall, t }) {
+  const [view, setView] = useState('lookup');
+  const [pharmacy, setPharmacy] = useState(null);
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardError, setCardError] = useState('');
+  const [refills, setRefills] = useState(null);
+  const [notice, notify] = useNotice();
+
+  const loadPharmacy = useCallback(async () => {
+    try { setPharmacy(await apiCall('GET', `/pharmacies/${session.id}`)); }
+    catch (e) { notify(e.message, true); }
+  }, [apiCall, session.id]);
+
+  useEffect(() => { loadPharmacy(); }, [loadPharmacy]);
+
+  const search = async () => {
+    const card = cardNumber.trim().toUpperCase();
+    if (!card) { setCardError(t('errRequired', t('lookupByCard'))); return; }
+    if (!RULES.healthCard.test(card)) { setCardError(t('errHealthCard')); return; }
+    setCardError('');
+    try { setRefills(await apiCall('GET', `/refills?healthCardNumber=${encodeURIComponent(card)}`)); }
+    catch (e) { notify(e.message, true); }
+  };
+
+  const fill = async (id) => {
+    try {
+      await apiCall('POST', `/refills/${id}/fill?pharmacyId=${session.id}`);
+      notify(t('refillFilled'));
+      search();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  const today = todayISO();
+
+  if (!pharmacy) return <Notice {...notice} />;
+
+  return (
+    <div>
+      <div className="tabs">
+        <button className={view === 'lookup' ? '' : 'inactive'} onClick={() => setView('lookup')}>{t('pharmacyLookup')}</button>
+        <button className={view === 'profile' ? '' : 'inactive'} onClick={() => setView('profile')}>{t('myProfile')}</button>
+      </div>
+      <Notice {...notice} />
+
+      {view === 'lookup' && (
+        <section>
+          <h2>{t('pharmacyLookup')}</h2>
+          <div className="form-row">
+            <Field label={t('lookupByCard')} name="cardNumber" values={{ cardNumber }} onChange={v => setCardNumber(v.cardNumber)}
+                   errors={{ cardNumber: cardError }} maxLength={14} placeholder="ABCD1234567890" />
+            <button onClick={search}>{t('searchByCard')}</button>
+          </div>
+          {refills !== null && (refills.length === 0 ? <p><em>{t('noRefillsFound')}</em></p> : (
+            <table><tbody>
+              <tr><th>{t('medicationCol')}</th><th>{t('activeIngredient')}</th><th>{t('manufacturer')}</th><th>{t('doctorCol')}</th><th>{t('validityCol')}</th><th>{t('boxesCol')}</th><th></th></tr>
+              {refills.map(r => {
+                const fillable = today >= r.validFrom && today <= r.validUntil;
+                return (
+                  <tr key={r.id} className={fillable ? 'fillable' : 'not-fillable'}>
+                    <td>{r.medicationBrandName}</td><td>{r.medicationActiveIngredient}</td><td>{r.medicationManufacturer}</td>
+                    <td>{r.doctorName}</td><td>{isoToDisplay(r.validFrom)} → {isoToDisplay(r.validUntil)}</td><td>{r.boxes}</td>
+                    <td>
+                      {fillable
+                        ? <button onClick={() => fill(r.id)}>{t('markAsFilled')}</button>
+                        : <em>{t('notFillableYet')}</em>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody></table>
+          ))}
+        </section>
+      )}
+
+      {view === 'profile' && <PharmacyProfileEditor pharmacy={pharmacy} apiCall={apiCall} t={t} onSaved={loadPharmacy} />}
+    </div>
+  );
+}
+
+function PharmacyProfileEditor({ pharmacy, apiCall, onSaved, t }) {
+  const [v, setV] = useState({
+    name: pharmacy.name, pharmacistFirstName: pharmacy.pharmacistFirstName, pharmacistLastName: pharmacy.pharmacistLastName,
+    phone: pharmacy.phone, email: pharmacy.email,
+    street: pharmacy.address?.street, city: pharmacy.address?.city, postalCode: pharmacy.address?.postalCode, province: pharmacy.address?.province,
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const [notice, notify] = useNotice();
+  const errors = submitted ? validateForm(v, PHARMACY_PROFILE_SPEC, t) : {};
+
+  const save = async () => {
+    setSubmitted(true);
+    if (hasErrors(validateForm(v, PHARMACY_PROFILE_SPEC, t))) { notify(t('fixErrors'), true); return; }
+    try {
+      await apiCall('PATCH', `/pharmacies/${pharmacy.id}/profile`, {
+        name: v.name.trim(), pharmacistFirstName: v.pharmacistFirstName.trim(), pharmacistLastName: v.pharmacistLastName.trim(),
+        phone: v.phone.trim(), email: v.email.trim(),
+        address: { street: v.street.trim(), city: v.city.trim(), postalCode: v.postalCode.trim(), province: v.province },
+      });
+      notify(t('profileUpdated'));
+      onSaved();
+    } catch (e) { notify(e.message, true); }
+  };
+
+  return (
+    <section>
+      <h2>{t('myProfile')}</h2>
+      <div className="form-row">
+        <Field label={t('establishmentName')} name="name" values={v} onChange={setV} errors={errors} wide />
+      </div>
+      <div className="form-row">
+        <Field label={t('pharmacistFirstName')} name="pharmacistFirstName" values={v} onChange={setV} errors={errors} />
+        <Field label={t('pharmacistLastName')} name="pharmacistLastName" values={v} onChange={setV} errors={errors} />
+        <PhoneField label={t('phone')} name="phone" values={v} onChange={setV} errors={errors} />
+        <Field label={t('email')} name="email" values={v} onChange={setV} errors={errors} type="email" />
+      </div>
+      <div className="form-row">
+        <Field label={t('street')} name="street" values={v} onChange={setV} errors={errors} wide />
+      </div>
+      <div className="form-row">
+        <Field label={t('city')} name="city" values={v} onChange={setV} errors={errors} />
+        <PostalCodeField label={t('postalCode')} values={v} onChange={setV} errors={errors} />
+        <ProvinceSelect label={t('province')} values={v} onChange={setV} errors={errors} t={t} />
+      </div>
+      <button onClick={save}>{t('saveProfile')}</button>
+      <Notice {...notice} />
+
+      <h2>{t('changePassword')}</h2>
+      <PasswordChangeForm apiCall={apiCall} endpoint={`/pharmacies/${pharmacy.id}/password`} t={t} />
+    </section>
+  );
+}
+
+
+function App() {
+  const [lang, setLang] = useState('es');
+  const t = useI18n(lang);
+  const [apiBase, setApiBase] = useState('http://localhost:8080/api');
+  const [session, setSession] = useState(null); // {id, role, name, lastName, token, expiresAt}; kept in memory only
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const handleUnauthorized = useCallback(() => { setSession(null); setSessionExpired(true); }, []);
+  const apiCall = useApi(apiBase, session ? session.token : null, handleUnauthorized);
+
+  if (!session) {
+    return <LoginScreen apiBase={apiBase} setApiBase={setApiBase} apiCall={apiCall}
+             onLoggedIn={(s) => { setSessionExpired(false); setSession(s); }}
+             sessionExpired={sessionExpired} lang={lang} setLang={setLang} t={t} />;
+  }
+
+  const displayName = session.lastName ? `${session.name} ${session.lastName}` : session.name;
+  const roleLabel = ROLE_LABELS[lang][session.role];
+
+  return (
+    <div>
+      <header className="app-header">
+        <div className="brand">
+          <div className="brand-badge">Rx</div>
+          <div className="brand-text">
+            <div className="brand-name-row">
+              <span className="brand-name">{APP_NAME}</span>
+              <span className="demo-badge">DEMO</span>
+            </div>
+            <div className="brand-tagline">{t('subtitle')}</div>
+          </div>
+        </div>
+        <div className="header-controls">
+          <LanguageSwitcher lang={lang} onChange={setLang} />
+          <div className="user-chip">
+            <span>{displayName}</span>
+            <span className="role-badge">{roleLabel}</span>
+            <button className="secondary" onClick={() => { setSessionExpired(false); setSession(null); }}>{t('logout')}</button>
+          </div>
+        </div>
+      </header>
+
+      {session.role === 'ADMINISTRATOR' && <AdministratorHome apiCall={apiCall} t={t} />}
+      {session.role === 'DOCTOR' && <DoctorHome session={session} apiCall={apiCall} t={t} />}
+      {session.role === 'PATIENT' && <PatientHome session={session} apiCall={apiCall} t={t} />}
+      {session.role === 'PHARMACY' && <PharmacyHome session={session} apiCall={apiCall} t={t} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
