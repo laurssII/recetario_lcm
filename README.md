@@ -1,5 +1,5 @@
 # Recetas — Sistema de receta electrónica
-
+[![CI](https://github.com/laurssII/recetario_lcm/actions/workflows/ci.yml/badge.svg)](https://github.com/laurssII/recetario_lcm/actions/workflows/ci.yml)
 API REST en **Java 17 + Spring Boot 3** para la gestión de citas médicas, prescripciones y planes de recetas electrónicas. Parte del enunciado de la asignatura *DAGSS* (Universidade de Vigo), cuyas historias de usuario están en [`doc/`](doc/).
 
 El proyecto es el **backend**. Para poder probarlo sin más herramientas incluye [`cliente-demo.html`](cliente-demo.html), un cliente de demostración de un solo fichero: no es el frontend del proyecto (ver [Cliente de demostración](#cliente-de-demostración)).
