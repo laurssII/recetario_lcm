@@ -30,16 +30,22 @@ Pila técnica: Java 17 · Spring Boot 3.3 · Spring Security (JWT + BCrypt) · S
 
 ## Algunas imágenes de demo
 
+### Pantalla de inicio de sesión
 ![Pantalla de inicio de sesión](<doc/images/Pantalla de inicio de sesión.png>)
 
+### Vista principal centros (administrador)
 ![Vista principal centros (administrador)](<doc/images/Vista principal centros (administrador).png>)
 
+### Vista principal pacientes (administrador
 ![Vista principal pacientes (administrador)](<doc/images/Vista principal pacientes (administrador).png>)
 
+### Vista agenda (paciente)
 ![Vista agenda (paciente)](<doc/images/Vista agenda (paciente).png>)
 
+### Vista agenda (médico)
 ![Vista agenda (médico)](<doc/images/Vista agenda (médico).png>)
 
+### Vista recetas de un paciente (farmacia)
 ![Vista recetas de un paciente (farmacia)](<doc/images/Vista recetas de un paciente (farmacia).png>)
 
 ## Puesta en marcha
