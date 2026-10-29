@@ -29,12 +29,18 @@ config/       Spring Security (SecurityConfig), OpenAPI (OpenApiConfig) y carga 
 Pila técnica: Java 17 · Spring Boot 3.3 · Spring Security (JWT + BCrypt) · Spring Data JPA · Bean Validation · MySQL / H2 · springdoc-openapi (Swagger UI) · JUnit 5 + Mockito · Docker.
 
 ## Algunas imágenes de demo
-![Pantalla de inicio de sesión](doc/images/Pantalla de inicio de sesión.png)
-![Vista principal centros (administrador)](doc/images/Vista principal centros (administrador).png)
-![Vista principal pacientes (administrador)](doc/images/Vista principal pacientes (administrador).png)
-![Vista agenda (paciente)](doc/images/Vista agenda (paciente).png)
-![Vista agenda (médico)](doc/images/Vista agenda (médico).png)
-![Vista recetas de un pacieinte (farmacia)](doc/images/Vista recetas de un pacieinte (farmacia).png)
+
+![Pantalla de inicio de sesión](<doc/images/Pantalla de inicio de sesión.png>)
+
+![Vista principal centros (administrador)](<doc/images/Vista principal centros (administrador).png>)
+
+![Vista principal pacientes (administrador)](<doc/images/Vista principal pacientes (administrador).png>)
+
+![Vista agenda (paciente)](<doc/images/Vista agenda (paciente).png>)
+
+![Vista agenda (médico)](<doc/images/Vista agenda (médico).png>)
+
+![Vista recetas de un paciente (farmacia)](<doc/images/Vista recetas de un paciente (farmacia).png>)
 
 ## Puesta en marcha
 
