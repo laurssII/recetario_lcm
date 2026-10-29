@@ -6,14 +6,6 @@ El proyecto es el **backend**. Para poder probarlo sin más herramientas incluye
 
 ---
 
-## Qué venía dado y qué se ha añadido
-
-| | Contenido |
-|---|---|
-| **Dado por la asignatura** | El enunciado: historias de usuario, detalles de JPA/Spring y tareas del sprint ([`doc/historias.md`](doc/historias.md), [`doc/detalles_jpa_spring.md`](doc/detalles_jpa_spring.md), [`doc/tareas_sprint.md`](doc/tareas_sprint.md)), sin modificar. Y el proyecto de partida: solo entidades JPA y repositorios, incompletos. |
-| **Añadido en este proyecto** | Capa de servicios y API REST con DTOs, gestión de errores en JSON, validación de datos, seguridad (JWT, BCrypt, permisos por rol y por registro, unicidad), generación del plan de recetas, datos de prueba, documentación OpenAPI, Docker, tests y el cliente de demostración. |
-| **Documentos propios en `doc/`** | [`doc/validaciones.md`](doc/validaciones.md) y [`doc/seguridad.md`](doc/seguridad.md). |
-
 ## Qué hace
 
 - **Médicos**: agenda diaria, atención de citas, creación de prescripciones con generación **automática** de un plan de recetas.
@@ -35,6 +27,14 @@ config/       Spring Security (SecurityConfig), OpenAPI (OpenApiConfig) y carga 
 ```
 
 Pila técnica: Java 17 · Spring Boot 3.3 · Spring Security (JWT + BCrypt) · Spring Data JPA · Bean Validation · MySQL / H2 · springdoc-openapi (Swagger UI) · JUnit 5 + Mockito · Docker.
+
+## Algunas imágenes de demo
+![Pantalla de inicio de sesión](doc/images/Pantalla de inicio de sesión.png)
+![Vista principal centros (administrador)](doc/images/Vista principal centros (administrador).png)
+![Vista principal pacientes (administrador)](doc/images/Vista principal pacientes (administrador).png)
+![Vista agenda (paciente)](doc/images/Vista agenda (paciente).png)
+![Vista agenda (médico)](doc/images/Vista agenda (médico).png)
+![Vista recetas de un pacieinte (farmacia)](doc/images/Vista recetas de un pacieinte (farmacia).png)
 
 ## Puesta en marcha
 
@@ -121,24 +121,3 @@ Incluye:
 - **DTOs en vez de entidades**: evita bucles de serialización JSON en las relaciones y separa el contrato de la API del modelo de persistencia.
 - **Código en inglés, producto en español**: los identificadores y los comentarios del código están en inglés (los comentarios solo explican decisiones que el código no deja ver); los textos de cara al usuario (mensajes de validación, documentación de la API, interfaz del cliente de demostración) están en español, y el cliente tiene selector de idioma.
 - **Baja lógica**: ningún recurso maestro (centro, médico, paciente, farmacia, medicamento) se borra físicamente; se marca `activo=false`.
-
-## Bugs corregidos respecto al proyecto original
-
-- `Medico` se relacionaba con `CentroSalud` mediante un `@OneToMany` (una lista), cuando la relación real es "muchos médicos por centro" — corregido a `@ManyToOne`.
-- Faltaba por completo el repositorio de recetas, imprescindible para las historias de generación y consulta de recetas.
-- Typo en el nombre de la interfaz del repositorio de prescripciones.
-- Los centros de salud y los medicamentos no tenían getters/setters.
-- Búsquedas de texto inconsistentes entre entidades (`LIKE` en unas, coincidencia exacta en otras) — homogeneizadas.
-- Migración de `java.util.Date`/`Calendar` (deprecado en la práctica) a `java.time`.
-- Falta de manejo de errores: cualquier excepción devolvía un stacktrace HTML de Spring en vez de una respuesta JSON clara.
-- `spring-boot-starter-data-rest` publicaba todos los repositorios (contraseñas incluidas, con escritura) sin autenticación; eliminado.
-- La contraseña de un administrador nuevo viajaba en la URL y tenía un valor por defecto («changeme»); ahora va en el cuerpo y es obligatoria.
-- El CORS no permitía `PATCH`, así que el cambio de perfil y de contraseña fallaba desde el navegador.
-
-## Posibles ampliaciones
-
-- Seguridad: revocación de tokens, limitación de intentos de login y cambio obligatorio de la contraseña inicial (ver [`doc/seguridad.md`](doc/seguridad.md) §10).
-- Paginación (`Pageable`) en los listados con muchos resultados.
-- Migraciones de base de datos versionadas (Flyway/Liquibase) en lugar de `ddl-auto=update`.
-- Un frontend real, como proyecto aparte con build y tests, en lugar del cliente de demostración.
-- Integración continua (GitHub Actions con `./mvnw test`).
